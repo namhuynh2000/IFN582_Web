@@ -103,6 +103,8 @@ def get_images():
     cur.close()
     return listImage
 
+# def get_cart(userID)
+
 
 def add_image(image: Image):
     cur = mysql.connection.cursor()
