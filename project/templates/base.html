@@ -25,97 +25,32 @@
 
 <body>
     <header>
-        <nav class="navbar navbar-expand-lg navbar-light bg-info sticky-top shadow">
-            <a class="navbar-brand text-light" href="{{ url_for('main.index') }}">
-                <img src="{{ url_for('static', filename='img/miltonlogo.png') }}" width="30" height="30"
-                    class="d-inline-block align-top" alt="Milton Tours Logo">
-                Milton Tours
-            </a>
-
-            <!-- Toggle button for collapsed navbar -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <!-- Navbar links and search form -->
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link text-light active" href="#">About Us</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="{{ url_for('main.index', _anchor='cities') }}">Cities</a>
-                    </li>
-                    <li class="nav-item ">
-                        <a class="nav-link text-light" href="{{ url_for('main.order') }}">Basket</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="/discounts.html">Offers</a>
-                    </li>
-                </ul>
-
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link text-light" href="tel:+123456789"><u>1-800-MILTON</u></a>
-                    </li>
-                    <li class="nav-item">
-                        <form class="d-flex ms-5">
-                            <input class="form-control" type="search" placeholder="Search" aria-label="Search">
-                            <button class="btn btn-dark ms-2" type="submit">Search</button>
-                        </form>
-                    </li>
-                    <!-- <li class="nav-item ms-2 me-2">
-                        <a href="{{ url_for('main.login') }}">
-                            <button class="btn btn-dark">
-                                Login
-                            </button>
-                        </a>
-                    </li> -->
-                    {% if session['user'] and session['user']['is_admin'] %}
-                    <li class="nav-item ms-2">
-                        <a href="{{ url_for('main.manage') }}">
-                            <button class="btn btn-warning">
-                                Manage
-                            </button>
-                        </a>
-                    </li>
-                    {% endif %}
-                    {% if session['user'] %}
-                    <li class="nav-item ms-2 me-2">
-                        <a href="{{ url_for('main.logout') }}">
-                            <button class="btn btn-dark">
-                                Logout
-                            </button>
-                        </a>
-                    </li>
-                    {% else %}
-                    <li class="nav-item ms-2 me-2">
-                        <a href="{{ url_for('main.login') }}">
-                            <button class="btn btn-dark">
-                                Login
-                            </button>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </div>
-        </nav>
-
         <!-- HEADER -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
             <div class="container">
-                <a class="navbar-brand" href="#">MyShop</a>
+                <a class="navbar-brand" href="{{url_for('main.index')}}">MyShop</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
-                        <li class="nav-item"><a class="nav-link active" href="#">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.index')}}">Home</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.upload_image')}}">Upload</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Vendors</a></li>
                         <li class="nav-item"><a class="nav-link" href="#">Items</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Checkout</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.order')}}">Cart</a></li>
+                        {% if session['user'] and session['user']['role'] == "Admin" %}
+                        <li class="nav-item">
+                            <a class="nav-link text-warning" href="{{ url_for('main.manage') }}">
+                                Manage
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% if session['user'] %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a></li>
+                        {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>

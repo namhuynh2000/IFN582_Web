@@ -5,7 +5,7 @@ from datetime import datetime
 from hashlib import sha256
 
 from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings
-from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart
+from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
 from project.models import City, Tour, Currency, Image
@@ -18,9 +18,8 @@ from project.wrappers import only_admins
 bp = Blueprint('main', __name__)
 
 
-@bp.route('/root/', methods=['GET', 'POST'])
-def root_index():
-    print(get_images())
+@bp.route('/', methods=['GET', 'POST'])
+def index():
     return render_template('index.html', images=get_images())
 
 
@@ -35,7 +34,7 @@ def add_cart(imageID):
 
 
 @bp.route('/upload/', methods=['GET', 'POST'])
-@only_admins
+# @only_admins
 def upload_image():
     addImageForm = AddImageForm()
     if 'user' not in session or session['user']['userID'] == 0 or not session['logged_in']:
@@ -113,7 +112,6 @@ def login():
             # form.password.data = sha256(
             #     form.password.data.encode()).hexdigest()
             user = check_for_user(form.username.data, form.password.data)
-            print("----------------user:", user)
             if not user:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
@@ -129,7 +127,7 @@ def login():
             }
             session['logged_in'] = True
             flash('Login successful!')
-            return redirect(url_for('main.root_index'))
+            return redirect(url_for('main.index'))
 
     return render_template('login.html', form=form)
 
@@ -139,14 +137,84 @@ def logout():
     session.pop('user', None)
     session.pop('logged_in', None)
     flash('You have been logged out.')
-    return redirect(url_for('main.root_index'))
+    return redirect(url_for('main.index'))
+
+
+@bp.route('/order/', methods=['GET', 'POST'])
+def order():
+    if 'user' not in session or session['user']['userID'] == 0 or not session['logged_in']:
+        flash('Please log in before checkout.')
+        return redirect(url_for('main.login'))
+    userID = session['user']['userID']
+    listImage = get_image_in_cart(userID)
+    totalPrice = sum(image.price for image in listImage)
+
+    return render_template('order.html', listImage=listImage, totalPrice=totalPrice)
+
+
+@bp.route('/manage/')
+@only_admins
+def manage():
+    # check if the user is logged in and is an admin
+    if 'user' not in session or session['user']['userID'] == 0:
+        flash('Please log in before managing orders.', 'error')
+        return redirect(url_for('main.login'))
+    if not session['user']['role'] == 'Admin':
+        flash('You do not have permission to manage orders.', 'error')
+        return redirect(url_for('main.index'))
+    # now we know the user is logged in and is an admin
+    # we can show the manage panel
+    cityform = AddCityForm()
+    tourform = AddTourForm()
+    # we need to populate the cities in the tourform
+    tourform.tour_city.choices = [(image.imageID, image.title)
+                                  for image in get_images()]
+    return render_template('manage.html', cityform=cityform, tourform=tourform)
+
+
+@bp.post('/manage/')
+def handle_manage():
+    cityform = AddCityForm()
+    tourform = AddTourForm()
+    # we need to populate the cities in the tourform
+    # otherwise the form will not validate
+    tourform.tour_city.choices = [(city.id, city.name)
+                                  for city in get_cities()]
+    try:
+        if cityform.validate_on_submit():
+            # Add the new city to the database
+            city = City(
+                id=0,
+                name=cityform.city_name.data,
+                description=cityform.city_description.data,
+                image='brisbane.jpg'
+            )
+            add_city(city)
+            flash('City added successfully!')
+        elif tourform.validate_on_submit():
+            # Add the new tour to the database
+            tour = Tour(
+                id=0,
+                name=tourform.tour_name.data,
+                description=tourform.tour_description.data,
+                price=float(tourform.tour_price.data),
+                city=get_city(tourform.tour_city.data)
+            )
+            add_tour(tour)
+            flash('Tour added successfully!')
+        else:
+            flash('Failed to add city or tour. Please check your input.')
+    except Exception as e:
+        flash(f'An error occurred: {e}', 'error')
+    return redirect(url_for('main.index'))
+
 
 # -----------------------------------------------------------TENMPLATE----------------------------------------------------
 
 
-@bp.route('/')
-def index():
-    return render_template('index.html', cities=get_cities())
+# @bp.route('/')
+# def index():
+#     return render_template('index.html', cities=get_cities())
 
 
 @bp.route('/tours/<int:cityid>/')
@@ -155,10 +223,9 @@ def citytours(cityid):
     return render_template('citytours.html', tours=citytours, city=get_city(cityid))
 
 
-@bp.route('/order/', methods=['GET'])
-def order():
+@bp.route('/order_temp/', methods=['GET'])
+def order_():
     tour_id = request.args.get('tour_id')
-    order = get_basket()
 
     if tour_id:
         print(f'user requested to add tour id = {tour_id}')
@@ -291,60 +358,3 @@ def checkout():
 #     session.pop('logged_in', None)
 #     flash('You have been logged out.')
 #     return redirect(url_for('main.index'))
-
-
-@bp.route('/manage/')
-@only_admins
-def manage():
-    # check if the user is logged in and is an admin
-    if 'user' not in session or session['user']['user_id'] == 0:
-        flash('Please log in before managing orders.', 'error')
-        return redirect(url_for('main.login'))
-    if not session['user']['is_admin']:
-        flash('You do not have permission to manage orders.', 'error')
-        return redirect(url_for('main.index'))
-    # now we know the user is logged in and is an admin
-    # we can show the manage panel
-    cityform = AddCityForm()
-    tourform = AddTourForm()
-    # we need to populate the cities in the tourform
-    tourform.tour_city.choices = [(city.id, city.name)
-                                  for city in get_cities()]
-    return render_template('manage.html', cityform=cityform, tourform=tourform)
-
-
-@bp.post('/manage/')
-def handle_manage():
-    cityform = AddCityForm()
-    tourform = AddTourForm()
-    # we need to populate the cities in the tourform
-    # otherwise the form will not validate
-    tourform.tour_city.choices = [(city.id, city.name)
-                                  for city in get_cities()]
-    try:
-        if cityform.validate_on_submit():
-            # Add the new city to the database
-            city = City(
-                id=0,
-                name=cityform.city_name.data,
-                description=cityform.city_description.data,
-                image='brisbane.jpg'
-            )
-            add_city(city)
-            flash('City added successfully!')
-        elif tourform.validate_on_submit():
-            # Add the new tour to the database
-            tour = Tour(
-                id=0,
-                name=tourform.tour_name.data,
-                description=tourform.tour_description.data,
-                price=float(tourform.tour_price.data),
-                city=get_city(tourform.tour_city.data)
-            )
-            add_tour(tour)
-            flash('Tour added successfully!')
-        else:
-            flash('Failed to add city or tour. Please check your input.')
-    except Exception as e:
-        flash(f'An error occurred: {e}', 'error')
-    return redirect(url_for('main.index'))

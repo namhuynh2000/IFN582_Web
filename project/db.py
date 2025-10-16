@@ -1,7 +1,7 @@
 from __future__ import annotations  # For forward references in type hints
 from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer
 from datetime import datetime
-from project.utils import generate_uuid 
+from project.utils import generate_uuid
 from . import mysql
 
 
@@ -103,12 +103,40 @@ def get_images():
     cur.close()
     return listImage
 
-# def get_cart(userID)
+
+def get_image(imageID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+                SELECT 
+                    *
+                FROM image WHERE imageID = %s;
+                """, [imageID])
+    result = cur.fetchone()
+    image = Image(
+        userID=result['userID'], listCategory=get_categories(imageID=result['imageID']), imageID=result['imageID'], title=result['title'], description=result['description'],
+        price=float(result['price']), quantity=int(result['quantity']), currency=result['currency'], imageStatus=result['imageStatus'], extension=result['extension'],
+        updateDate=datetime.combine(result['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=result['imageID'])
+    ) if result else None
+
+    cur.close()
+    return image
+
+
+def get_image_in_cart(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM CartImage 
+        WHERE userID = %s;
+    """, [userID])
+    results = cur.fetchall()
+    listImage = [get_image(row['imageID']) for row in results]
+    cur.close()
+    return listImage
 
 
 def add_image(image: Image):
     cur = mysql.connection.cursor()
-
     query = """
         INSERT INTO image (
             imageID, userID, title, description, price, currency,
@@ -164,6 +192,7 @@ def check_for_user(username, password):
         elif row['role'] == 'Customer':
             return Customer(username=row['username'], password=row['password'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], bio=row['bio'], portfolio=row['portfolio'], totalSales=row['totalSales'])
     return None
+
 
 def add_user(form):
     cur = mysql.connection.cursor()
