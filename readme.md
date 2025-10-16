@@ -40,3 +40,4 @@ password: admin
 
 im NEO
 no
+yes 
