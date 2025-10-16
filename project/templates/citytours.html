@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<!-- add a big banner to welcome user -->
+<div class="p-5 text-white bg-image" 
+    style="background-image: url({{url_for('static', filename='img/header.jpg')}}); background-size: cover;">
+    <div class="text-white text-center py-5 px-4">
+        <div>
+            <h1 class="display-2">Tours choices for {{ city.name }}</h1>
+            <p class="display-6 text-dark"> {{city.description }} </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block main %}
+<!-- display tours for the specific city -->
+<section class="shadow-sm mb-5">
+
+    <div class="text-dark text-center">
+        <div>
+            <p class="h3 text-dark mb-4">Select a tour from below</p>
+        </div>
+    </div>
+
+    <div class="row ps-5 ps-5">
+        <!-- each tour is a bootstrap card -->
+        {% for tour in tours %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img class="card-img-top" 
+                    src="{{ url_for('static', filename='img/' + tour.image) }}" 
+                    alt="Card image">
+                <div class="card-body">
+                    <h4 class="card-title">{{ tour.name }}</h4>
+                    <p class="card-text">{{ tour.description }}</p>
+                    <p class="card-text"> 
+                        The next tour is available on 
+                        {{ tour.date.strftime('%Y-%m-%d') }}.
+                    </p>
+                    <p class="card-text float-end text-danger"> 
+                        Price: ${{ tour.price }}
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <form method="POST" 
+                        action="{{ url_for('main.adding_to_basket', tour_id = tour.id) }}">
+                        <input 
+                            type="submit" 
+                            value="Add to Basket" 
+                            class="btn btn-primary">
+                    </form> 
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+</section>
+{% endblock %}

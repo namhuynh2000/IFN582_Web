@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% import 'bootstrap5/form.html' as wtf %}
+
+{% block main %}
+<section class="shadow-sm mb-5 mt-5">  
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1>User Registry</h1>
+                <p>
+                    Thank you for choosing to Milton Tours. Please provide
+                    your details to create your account. 
+                    If you already have an account, please 
+                    <a href="{{ url_for('main.login') }}">
+                    login here
+                    </a>   
+                    .
+                </p>
+            </div>
+        </div>
+        <div class="row mt-4 justify-content-center p-3">
+            <div class="col-md-6">
+                {{ wtf.render_form(form) }}
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
