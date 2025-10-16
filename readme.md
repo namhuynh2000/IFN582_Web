@@ -1,43 +1,31 @@
-# Libraries to Install
-Make sure to install the required libraries using the `requirements.txt` file
-Run the following commands before attempting to run this code.
-For Mac users, we need to do some setup before the `pip install` will work,
-so we have made a seperate bash script to run instead. 
+# 🧭 HOW TO RUN THE PROJECT PROPERLY
 
-### Windows
+A clear, step-by-step guide to set up and run this project on your local machine.
+
+## ⚙️ Step 1: Install All Required Packages
+Make sure you have **Python** and **pip** installed. Then install dependencies:
 ```bash
-py -m pip install -r requirements.txt
+pip install -r requirements.txt
 ```
 
-### macOS
-You may need to find where mysqlserver has been installed for the following
-script to set some flags.
-To find where it may be installed at, execute the following command on
-the terminal:
+## 🗄️ Step 2: Set Up the Database
+1. Open MySQL Workbench 
+2. Connect to your local MySQL server.
+3. Run the following SQL scripts in order:
+* project.sql
+* insert.sql
+This creates the database schema and inserts sample data.
+
+## 🧩 Step 3: Configure the Database Connection
+Update your credentials in __init__.py:
+```python
+app.config['MYSQL_USER'] = 'your_username'
+app.config['MYSQL_PASSWORD'] = 'your_password'
+app.config['MYSQL_HOST'] = 'localhost'
+```
+
+## ▶️ Step 4: Run the Application
+Start the app:
 ```bash
-sudo find /usr -name mysql.h
+py run.py
 ```
-Then, using what is found, we may need to update the variable named 
-`mysqlhome` if it differs from our default.
-
-```bash
-chmod +x ./mac.sh && sudo ./mac.sh
-```
-
-# Database setup
-Make sure to drop the old walkthrough database and execute the two SQL
-files in the exercise folder. `toursite-database.sql` builds the database
-and includes some data in all tables. `add-admins.sql` adds the admin table
-to the database and adds one user to an admin table.
-
-# User Accounts
-There is one admin account with the following details:
-
-```
-username: admin
-password: admin
-```
-
-im NEO
-no
-yes 
