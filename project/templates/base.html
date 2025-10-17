@@ -39,7 +39,7 @@
                         <li class="nav-item"><a class="nav-link" href="{{url_for('main.checkout')}}">Checkout</a></li>
                         {% if session['user'] and session['user']['role'] == "Vendor" %}
                         <li class="nav-item"><a class="nav-link text-warning" href="{{url_for('main.vendor')}}">Vendor
-                                manager</a></li>
+                                management</a></li>
                         {% endif %}
                         {% if session['user'] %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a></li>
