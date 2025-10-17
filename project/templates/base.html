@@ -4,7 +4,7 @@
 <head>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Milton Tours</title>
+    <title>MyShop</title>
     <meta name="description" content="Milton Tours">
 
     <!-- Import file css reset -->
@@ -27,6 +27,7 @@
     <header>
         <!-- HEADER -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top">
+            {% if not session['user'] or session['user']['role'] != "Admin" %}
             <div class="container">
                 <a class="navbar-brand" href="{{url_for('main.index')}}">MyShop</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -35,16 +36,10 @@
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item"><a class="nav-link" href="{{url_for('main.index')}}">Home</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.upload_image')}}">Upload</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Vendors</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#">Items</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.order')}}">Cart</a></li>
-                        {% if session['user'] and session['user']['role'] == "Admin" %}
-                        <li class="nav-item">
-                            <a class="nav-link text-warning" href="{{ url_for('main.manage') }}">
-                                Manage
-                            </a>
-                        </li>
+                        <li class="nav-item"><a class="nav-link" href="{{url_for('main.checkout')}}">Checkout</a></li>
+                        {% if session['user'] and session['user']['role'] == "Vendor" %}
+                        <li class="nav-item"><a class="nav-link text-warning" href="{{url_for('main.vendor')}}">Vendor
+                                manager</a></li>
                         {% endif %}
                         {% if session['user'] %}
                         <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a></li>
@@ -54,6 +49,25 @@
                     </ul>
                 </div>
             </div>
+            {% endif %}
+
+            {% if session['user'] and session['user']['role'] == "Admin" %}
+            <div class="container">
+                <a class="navbar-brand" href="{{url_for('main.manage')}}">MyShop | Admin</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ms-auto">
+                        {% if session['user'] %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a></li>
+                        {% else %}
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.login') }}">Login</a></li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
         </nav>
 
         {% with messages = get_flashed_messages(category_filter='message') %}
@@ -86,14 +100,14 @@
             {% endblock %}
         </main>
     </div>
+    <!-- FOOTER -->
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <div class="container">
+            <p class="mb-1">&copy; 2025 MyShop. All rights reserved.</p>
+        </div>
+    </footer>
 </body>
 
-<!-- FOOTER -->
-<footer class="bg-dark text-white text-center py-3 mt-5">
-    <div class="container">
-        <p class="mb-1">&copy; 2025 MyShop. All rights reserved.</p>
-    </div>
-</footer>
 
 <!-- Bootstrap 5 JS Bundle -->
 {% block scripts %}

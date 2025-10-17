@@ -1,5 +1,5 @@
 from __future__ import annotations  # For forward references in type hints
-from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer
+from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer, Vendor, Role
 from datetime import datetime
 from project.utils import generate_uuid
 from . import mysql
@@ -187,10 +187,43 @@ def check_for_user(username, password):
     row = cur.fetchone()
     cur.close()
     if row:
-        if row['role'] == 'Admin':
-            return Admin(username=row['username'], password=row['password'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'])
-        elif row['role'] == 'Customer':
-            return Customer(username=row['username'], password=row['password'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], bio=row['bio'], portfolio=row['portfolio'], totalSales=row['totalSales'])
+        if row['role'] == Role.ADMIN.value:
+            return Admin(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'])
+        elif row['role'] == Role.CUSTOMER.value:
+            return get_customer(row['userID'])
+        elif row['role'] == Role.VENDOR.value:
+            return get_vendor(row['userID'])
+    return None
+
+
+def get_customer(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM user
+        JOIN customer ON user.userID = customer.userID
+        WHERE user.userID = %s
+    """, (userID,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return Customer(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'])
+    return None
+
+
+def get_vendor(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM user AS u
+        JOIN customer AS c ON u.userID = c.userID
+        JOIN vendor AS v ON u.userID = v.userID
+        WHERE u.userID = %s
+    """, (userID,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return Vendor(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'], bio=row['bio'], portfolio=row['portfolio'])
     return None
 
 

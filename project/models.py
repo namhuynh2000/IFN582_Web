@@ -63,12 +63,13 @@ class Image:
 class Role(Enum):
     ADMIN = 'Admin'
     CUSTOMER = 'Customer'
+    VENDOR = 'Vendor'
 
 
 @dataclass
 class User:
     username: str
-    password: str
+    # password: str
     role: Role
     userID: str = field(default_factory=lambda: str(uuid4()))
     email: str = ''
@@ -105,29 +106,24 @@ class CustomerRank(Enum):
 
 
 class Customer(User):  # Inherit/
-    def __init__(self, username: str, password: str, userID: str, email: str = '', firstname: str = '', surname: str = '', phone: str = '', bio: str = '', portfolio: str = '', totalSales: int = 0):
-        super().__init__(username=username, password=password, userID=userID, email=email,
-                         firstname=firstname, surname=surname, phone=phone, role=Role.CUSTOMER)
-        # attributes for customer
-        self.customerRank = CustomerRank.BRONZE
-        # self.purchaseHistory: List[Purchase] = []
-        # self.listRatings: List[Rating] = []
-        # self.listPurchaseImages: List[Image] = [].append(image for purchase in self.purchaseHistory for image in purchase.listImages for purchase in self.purchaseHistory)
-        # self.cart: List[Image] = []
+    def __init__(self, username: str, userID: str, email: str = '', firstname: str = '', surname: str = '', phone: str = '', customerRank: CustomerRank = CustomerRank.BRONZE, role: Role = Role.CUSTOMER):
+        super().__init__(username=username, userID=userID, email=email,
+                         firstname=firstname, surname=surname, phone=phone, role=role)
+        self.customerRank = customerRank
 
-        # attributes for vendor
+
+class Vendor(Customer):  # Inherit/
+    def __init__(self, username,userID, email='', firstname='', surname='', phone='', customerRank: CustomerRank = CustomerRank.BRONZE,
+                 bio='', portfolio=''):
+        super().__init__(username, userID, email,
+                         firstname, surname, phone, customerRank, role=Role.VENDOR)
         self.bio = bio
         self.portfolio = portfolio
-        self.totalSales = totalSales
-        # self.listOwnImages: List[Image] = []
-
-    # def view_earnings(self):
-    #     return sum(image.get_totalAmount() for image in self.listOwnImages)
 
 
 class Admin(User):  # Inherit/
-    def __init__(self, username: str, password: str, userID: str, email: str = '', firstname: str = '', surname: str = '', phone: str = ''):
-        super().__init__(username=username, password=password, userID=userID, email=email,
+    def __init__(self, username: str, userID: str, email: str = '', firstname: str = '', surname: str = '', phone: str = ''):
+        super().__init__(username=username, userID=userID, email=email,
                          firstname=firstname, surname=surname, phone=phone,  role=Role.ADMIN)
 
 

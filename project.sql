@@ -30,37 +30,9 @@ CREATE TABLE User (
   customerRank ENUM('Bronze', 'Silver', 'Gold'),
   bio          TEXT,
   portfolio VARCHAR(400),
-  totalSales   INT,
   PRIMARY KEY (userID)
 );
 
--- CREATE TABLE Admin (
---   userID CHAR(36) NOT NULL,
---   PRIMARY KEY (userID),
---   CONSTRAINT fk_admin_user
---     FOREIGN KEY (userID) REFERENCES User(userID)
---     ON UPDATE CASCADE ON DELETE CASCADE
--- );
-
--- CREATE TABLE Vendor (
---   userID       CHAR(36)     NOT NULL,
---   bio          TEXT,
---   portfolioURL VARCHAR(400),
---   totalSales   INT DEFAULT 0,
---   PRIMARY KEY (userID),
---   CONSTRAINT fk_vendor_user
---     FOREIGN KEY (userID) REFERENCES User(userID)
---     ON UPDATE CASCADE ON DELETE CASCADE
--- );
-
--- CREATE TABLE Customer (
---   userID      CHAR(36) NOT NULL,
---   customerRank ENUM('Bronze', 'Silver', 'Gold') DEFAULT 'Bronze',
---   PRIMARY KEY (userID),
---   CONSTRAINT fk_customer_user
---     FOREIGN KEY (userID) REFERENCES User(userID)
---     ON UPDATE CASCADE ON DELETE CASCADE
--- );
 
 CREATE TABLE Category (
   categoryID   CHAR(36)     NOT NULL,

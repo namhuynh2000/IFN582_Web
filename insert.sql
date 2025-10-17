@@ -12,19 +12,19 @@ SET
   @cust2   = UUID();
 
 INSERT INTO `User`
-(userID, username, password, email, firstname, surname, phone, role, customerRank, bio, portfolio, totalSales)
+(userID, username, password, email, firstname, surname, phone, role, customerRank, bio, portfolio)
 VALUES
 -- Admins
-(@admin1,  'admin_anne', 'hash_admin1', 'anne@site.test',  'Anne',  'Admin',  '111-111', 'Admin', NULL, NULL, NULL, 0),
-(@admin2,  'admin_alan', 'hash_admin2', 'alan@site.test',  'Alan',  'Admin',  '111-112', 'Admin', NULL, NULL, NULL, 0),
+(@admin1,  'admin_anne', 'hash_admin1', 'anne@site.test',  'Anne',  'Admin',  '111-111', 'Admin', NULL, NULL, NULL),
+(@admin2,  'admin_alan', 'hash_admin2', 'alan@site.test',  'Alan',  'Admin',  '111-112', 'Admin', NULL, NULL, NULL),
 
 -- Vendors (role vẫn là Customer, nhưng có bio & portfolioURL)
-(@vendor1, 'vendor_viv', 'hash_vend1',  'viv@site.test',   'Viv',   'Vendor', '222-201', 'Customer', NULL, 'Nature photographer', 'https://portfolio.example/viv', 0),
-(@vendor2, 'vendor_val', 'hash_vend2',  'val@site.test',   'Val',   'Vendor', '222-202', 'Customer', NULL, 'City & abstract artist', 'https://portfolio.example/val', 0),
+(@vendor1, 'vendor_viv', 'hash_vend1',  'viv@site.test',   'Viv',   'Vendor', '222-201', 'Customer', NULL, 'Nature photographer', 'https://portfolio.example/viv'),
+(@vendor2, 'vendor_val', 'hash_vend2',  'val@site.test',   'Val',   'Vendor', '222-202', 'Customer', NULL, 'City & abstract artist', 'https://portfolio.example/val'),
 
 -- Customers
-(@cust1,   'cust_cara',  'hash_cus1',   'cara@site.test',  'Cara',  'Cust',   '333-301', 'Customer', 'Bronze', NULL, NULL, 0),
-(@cust2,   'cust_carl',  'hash_cus2',   'carl@site.test',  'Carl',  'Cust',   '333-302', 'Customer', 'Gold',   NULL, NULL, 0);
+(@cust1,   'cust_cara',  'hash_cus1',   'cara@site.test',  'Cara',  'Cust',   '333-301', 'Customer', 'Bronze', NULL, NULL),
+(@cust2,   'cust_carl',  'hash_cus2',   'carl@site.test',  'Carl',  'Cust',   '333-302', 'Customer', 'Gold',   NULL, NULL);
 
 -- =========================
 -- CATEGORIES
