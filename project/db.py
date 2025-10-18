@@ -95,6 +95,7 @@ def get_images():
                 FROM image;
                 """)
     results = cur.fetchall()
+    print("Results:", results)
     listImage = [Image(
         userID=row['userID'], listCategory=get_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
         price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
@@ -178,6 +179,7 @@ def add_to_cart(userID: str, imageID: str):
 
 
 def check_for_user(username, password):
+    print("Checking for user:", username, password)
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT *
@@ -185,6 +187,7 @@ def check_for_user(username, password):
         WHERE username = %s AND password = %s
     """, (username, password))
     row = cur.fetchone()
+    print("row:", row)
     cur.close()
     if row:
         if row['role'] == Role.ADMIN.value:
@@ -200,11 +203,12 @@ def get_customer(userID: str):
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT *
-        FROM user
-        JOIN customer ON user.userID = customer.userID
-        WHERE user.userID = %s
+        FROM user AS u
+        JOIN customer AS c ON u.userID = c.userID
+        WHERE u.userID = %s
     """, (userID,))
     row = cur.fetchone()
+    print("Customer row:", row)
     cur.close()
     if row:
         return Customer(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'])

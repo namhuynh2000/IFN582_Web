@@ -4,7 +4,7 @@ from datetime import datetime
 
 from hashlib import sha256
 
-from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings
+from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings, get_customer
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
@@ -112,6 +112,7 @@ def login():
             # form.password.data = sha256(
             #     form.password.data.encode()).hexdigest()
             user = check_for_user(form.username.data, form.password.data)
+            print("After check_for_user", user)
             if not user:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
@@ -151,8 +152,10 @@ def checkout():
     userID = session['user']['userID']
     listImage = get_image_in_cart(userID)
     totalPrice = sum(image.price for image in listImage)
+    customerInfor = get_customer(session['user']['userID'])
+    
 
-    return render_template('checkout.html', listImage=listImage, totalPrice=totalPrice)
+    return render_template('checkout.html', listImage=listImage, totalPrice=totalPrice, customerInfor=customerInfor)
 
 
 @bp.route('/manage/')
