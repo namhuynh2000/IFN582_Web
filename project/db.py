@@ -1,5 +1,5 @@
 from __future__ import annotations  # For forward references in type hints
-from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer, Vendor, Role
+from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer, Vendor, Role, CustomerRank
 from datetime import datetime
 from project.utils import generate_uuid
 from . import mysql
@@ -177,7 +177,7 @@ def add_to_cart(userID: str, imageID: str):
     cur.close()
 
 
-def check_for_user(username, password):
+def get_user(username, password):
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT *
@@ -188,13 +188,27 @@ def check_for_user(username, password):
     cur.close()
     if row:
         if row['role'] == Role.ADMIN.value:
-            return Admin(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'])
+            return get_admin(row['userID'])
         elif row['role'] == Role.CUSTOMER.value:
             return get_customer(row['userID'])
         elif row['role'] == Role.VENDOR.value:
             return get_vendor(row['userID'])
     return None
 
+
+def get_admin(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM user
+        JOIN admin ON user.userID = admin.userID
+        WHERE user.userID = %s
+    """, (userID,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return Admin(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'])
+    return None
 
 def get_customer(userID: str):
     cur = mysql.connection.cursor()
@@ -227,15 +241,56 @@ def get_vendor(userID: str):
     return None
 
 
-def add_user(form):
+def add_customer(form):
     cur = mysql.connection.cursor()
+    userID = generate_uuid()
     cur.execute("""
         INSERT INTO user (userID, username, password, email, firstname, surname, phone)
         VALUES (%s, %s, %s, %s, %s, %s, %s)
-    """, (generate_uuid(), form.username.data, form.password.data, form.email.data,
+    """, (userID, form.username.data, form.password.data, form.email.data,
           form.firstname.data, form.surname.data, form.phone.data))
+    cur.execute("""
+        INSERT INTO customer (userID, customerRank)
+        VALUES (%s, %s)
+    """, (userID, CustomerRank.BRONZE.value))
     mysql.connection.commit()
     cur.close()
+
+
+#temp debug
+def change_role(userID: str, new_role: Role):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE user
+        SET role = %s
+        WHERE userID = %s
+    """, (new_role.value, userID))
+    if(new_role == Role.ADMIN):
+        cur.execute("""
+            INSERT INTO admin (userID)
+            VALUES (%s)
+        """, (userID,))
+    elif(new_role == Role.VENDOR):
+        cur.execute("""
+            INSERT INTO vendor (userID, bio, portfolio)
+            VALUES (%s, %s, %s)
+        """, (userID, '', ''))
+    mysql.connection.commit()
+    cur.close()    
+
+    
+def check_user(username: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM user
+        WHERE username = %s
+    """, (username,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return True
+    return False
 
 # ------------------------------------------TEMPLATE----------------------------------------------------
 
