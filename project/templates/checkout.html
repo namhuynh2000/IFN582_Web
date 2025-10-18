@@ -1,10 +1,12 @@
 {% extends 'base.html' %}
 
+{% import 'bootstrap5/form.html' as wtf %}
+
 {% block main %}
 <div class="container mt-5">
     <h1 class="text-center mb-4">Checkout</h1>
 
-    {% if cart|length == 0 %}
+    {% if listImage|length == 0 %}
     <div class="alert alert-info text-center">Your basket is empty.</div>
     {% else %}
     <table class="table table-striped align-middle text-center">
@@ -17,7 +19,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for item in cart %}
+            {% for item in listImage %}
             <tr>
                 <td class="text-start">
                     <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}"
@@ -27,7 +29,7 @@
                 <td>${{ item.price }}</td>
                 <td>${{ item.price }}</td>
                 <td>
-                    <form action="{{ url_for('remove_cart_item', index=loop.index0) }}" method="POST">
+                    <form action="{{ url_for('main.remove_cart_item', imageID = item.imageID) }}" method="POST">
                         <button type="submit" class="btn btn-danger btn-sm">Remove</button>
                     </form>
                 </td>
@@ -36,9 +38,11 @@
         </tbody>
     </table>
 
-    <div class="text-end fs-4 fw-bold mb-3">Total: ${{ total }}</div>
-
-    <form>
+    <div class="text-end fs-4 fw-bold mb-3">Total: ${{ totalPrice }}</div>
+     <h2>Payment Information</h2>
+     {{ wtf.render_form(formPayment) }}
+     
+    <!-- <form>
         <div class="mb-3">
             <input class="form-control" type="text" placeholder="Full Name" required>
         </div>
@@ -61,7 +65,7 @@
         <div class="text-center">
             <button class="btn btn-success btn-lg">Complete Purchase</button>
         </div>
-    </form>
+    </form> -->
     {% endif %}
 </div>
 {% endblock %}

@@ -2,8 +2,9 @@ from flask_wtf import FlaskForm
 from wtforms.fields import SubmitField, StringField, PasswordField
 from wtforms.fields import TextAreaField, RadioField, DecimalField, SelectField, FileField
 from wtforms.fields import DateTimeLocalField
-from wtforms.validators import InputRequired, email
+from wtforms.validators import InputRequired, email, Regexp
 from project.models import Currency
+
 
 class AddImageForm(FlaskForm):
     """Form for uploading an image."""
@@ -14,16 +15,28 @@ class AddImageForm(FlaskForm):
     image_file = FileField("Image File", validators = [InputRequired()])  # This will be handled in the view
     submit = SubmitField("Upload Image")
 
-
-# -----------------------------------TEMPLATE-----------------------------------
-
-class CheckoutForm(FlaskForm):
+class CheckoutFormPayment(FlaskForm):
     """Form for user checkout."""
     firstname = StringField("Your first name", validators = [InputRequired()])
     surname = StringField("Your surname", validators = [InputRequired()])
     email = StringField("Your email", validators = [InputRequired()])
     phone = StringField("Your phone number", validators = [InputRequired()])
-    submit = SubmitField("Send to Agent")
+    """Payment Information"""
+    cardNumber = StringField("Card Number", validators=[
+        InputRequired(),
+        Regexp(r"^\d{16}$", message="Card number must be 16 digits")
+    ])
+    expiryDate = StringField("Expiry Date (MM/YY)", validators=[InputRequired()])
+    CVV = StringField("CVV", validators=[
+        InputRequired(),
+        Regexp(r"^\d{3}$", message="CVV must be 3 digits")
+    ])
+    submit = SubmitField("Complete Payment")
+
+
+
+# -----------------------------------TEMPLATE-----------------------------------
+
 
 class LoginForm(FlaskForm):
     """Form for user login."""

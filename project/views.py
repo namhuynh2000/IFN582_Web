@@ -4,10 +4,10 @@ from datetime import datetime
 
 from hashlib import sha256
 
-from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings, get_customer
+from project.db import remove_image_cart, add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings, get_customer
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
-from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
+from project.forms import LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm, CheckoutFormPayment
 from project.models import City, Tour, Currency, Image, Role
 from project.utils import is_allowed_file, generate_uuid, check_user_logged_in
 from werkzeug.utils import secure_filename
@@ -143,6 +143,17 @@ def logout():
     flash('You have been logged out.')
     return redirect(url_for('main.index'))
 
+@bp.route('/remove_image_cart/<string:imageID>', methods=['POST'])
+def remove_cart_item(imageID):
+    if check_user_logged_in() == False:
+        flash('Please log in before remove from cart.', 'error')
+        return redirect(url_for('main.login'))
+    userID = session['user']['userID']
+
+    remove_image_cart(userID, imageID)
+    flash('Image removed from cart.')
+    return redirect(url_for('main.checkout'))
+
 
 @bp.route('/checkout/', methods=['GET', 'POST'])
 def checkout():
@@ -153,9 +164,48 @@ def checkout():
     listImage = get_image_in_cart(userID)
     totalPrice = sum(image.price for image in listImage)
     customerInfor = get_customer(session['user']['userID'])
-    
 
-    return render_template('checkout.html', listImage=listImage, totalPrice=totalPrice, customerInfor=customerInfor)
+
+    # form = CheckoutForm()
+    formPayment = CheckoutFormPayment()
+
+
+    if request.method == 'POST':
+        if formPayment.validate_on_submit() :
+            flash('Payment successful!')
+            return redirect(url_for('main.checkout'))
+        else:
+            flash('The provided information is missing or incorrect', 'error')
+
+    formPayment.firstname.data = session['user']['firstname']
+    formPayment.surname.data = session['user']['surname']
+    formPayment.email.data = session['user']['email']
+    formPayment.phone.data = session['user']['phone']
+
+    # if form.validate_on_submit():
+    #     form.firstname.data = session['user']['firstname']
+    #     form.surname.data = session['user']['surname']
+    #     form.email.data = session['user']['email']
+    #     form.phone.data = session['user']['phone']
+    #     flash("Payment successful!", "success")
+    #     return redirect(url_for('main.checkout_success')) 
+    # if formPayment.validate_on_submit():
+       
+    #     card_number = form.cardNumber.data
+    #     expiry = form.expiryDate.data
+    #     cvv = form.CVV.data
+
+    #     flash("Payment successful!", "success")
+    #     return redirect(url_for('main.checkout_success'))  
+   
+    return render_template(
+    'checkout.html',
+    formPayment=formPayment,
+    listImage=listImage,
+    totalPrice=totalPrice,
+    customerInfor=customerInfor
+)
+
 
 
 @bp.route('/manage/')

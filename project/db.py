@@ -198,6 +198,17 @@ def check_for_user(username, password):
             return get_vendor(row['userID'])
     return None
 
+def remove_image_cart(userID: str, imageID: str):
+    cur = mysql.connection.cursor()
+    query = """
+        DELETE FROM CartImage
+        WHERE userID = %s AND imageID = %s
+    """
+    data = (userID, imageID)
+    cur.execute(query, data)
+    mysql.connection.commit()
+    cur.close()
+
 
 def get_customer(userID: str):
     cur = mysql.connection.cursor()
