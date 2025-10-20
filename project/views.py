@@ -22,6 +22,10 @@ bp = Blueprint('main', __name__)
 def index():
     return render_template('index.html', images=get_images())
 
+@bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
+def item_detail():
+    item = get_image(imageID)
+    return render_template('item.html', item)
 
 @bp.route('/cart/<string:imageID>', methods=['GET', 'POST'])
 def add_cart(imageID):
