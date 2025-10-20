@@ -4,7 +4,7 @@ from datetime import datetime
 
 from hashlib import sha256
 
-from project.db import remove_image_cart, add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings, get_customer
+from project.db import remove_image_cart, add_order, get_orders, add_customer, is_admin, get_images, get_ratings, get_user, check_user, get_customer
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm, CheckoutFormPayment
@@ -90,12 +90,12 @@ def register():
             #     form.password.data.encode()).hexdigest()
 
             # Check if the user already exists
-            user = check_for_user(form.username.data, form.password.data)
+            user = check_user(form.username.data)
             if user:
                 flash('User already exists', 'error')
                 return redirect(url_for('main.register'))
 
-            add_user(form)
+            add_customer(form)
             flash('Registration successful!')
             return redirect(url_for('main.login'))
 
@@ -111,8 +111,7 @@ def login():
             # temp debug
             # form.password.data = sha256(
             #     form.password.data.encode()).hexdigest()
-            user = check_for_user(form.username.data, form.password.data)
-            print("After check_for_user", user)
+            user = get_user(form.username.data, form.password.data)
             if not user:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
