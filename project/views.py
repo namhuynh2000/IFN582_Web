@@ -1,20 +1,34 @@
-from flask import Blueprint, render_template, request, session, flash, current_app
-from flask import redirect, url_for, jsonify
+from flask import (
+    Blueprint, render_template, request, session, flash, current_app,
+    redirect, url_for, jsonify
+)
 from datetime import datetime
-
 from hashlib import sha256
-
-from project.db import (add_category, add_customer, add_order, check_user, get_categories,
-    get_images, get_orders, get_ratings, get_user, is_admin)
-from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
-from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
-from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm, AddCategoryForm
-from project.models import City, Tour, Currency, Image, Role, Category
-from project.utils import is_allowed_file, generate_uuid, check_user_logged_in
-from werkzeug.utils import secure_filename
 import os
+from werkzeug.utils import secure_filename
 
+from project.db import (
+    add_category, add_customer, add_order, check_user, get_categories,
+    get_images, get_orders, get_ratings, get_user, is_admin, get_customer,
+    get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image,
+    add_to_cart, get_image_in_cart, remove_image_cart, get_image
+)
+
+from project.session import (
+    get_basket, add_to_basket, empty_basket,
+    remove_from_basket, convert_basket_to_order
+)
+
+from project.forms import (
+    LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm,
+    AddCategoryForm, CheckoutForm, CheckoutFormPayment
+)
+
+from project.models import City, Tour, Currency, Image, Role, Category
+
+from project.utils import is_allowed_file, generate_uuid, check_user_logged_in
 from project.wrappers import only_admins, only_vendors
+
 
 bp = Blueprint('main', __name__)
 
@@ -22,6 +36,12 @@ bp = Blueprint('main', __name__)
 @bp.route('/', methods=['GET', 'POST'])
 def index():
     return render_template('index.html', images=get_images())
+
+
+@bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
+def item_detail(imageID):
+    item = get_image(imageID)
+    return render_template('item.html', item=item)
 
 
 @bp.route('/cart/<string:imageID>', methods=['GET', 'POST'])
@@ -39,7 +59,8 @@ def add_cart(imageID):
 def vendor():
     addImageForm = AddImageForm()
     cats = get_categories()
-    addImageForm.categories.choices = [(c.categoryID, c.categoryName) for c in cats]
+    addImageForm.categories.choices = [
+        (c.categoryID, c.categoryName) for c in cats]
     if check_user_logged_in() == False:
         flash('Please log in before upload image.', 'error')
         return redirect(url_for('main.login'))
@@ -51,7 +72,7 @@ def vendor():
             description = request.form['description']
             price = request.form['price']
             currency = request.form['currency']
-            
+
             print("listCategory: ", listCategory)
 
             if file and is_allowed_file(file.filename):
@@ -120,7 +141,7 @@ def login():
             if not user:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
-            
+
             # Store full user info in session
             session['user'] = {
                 'userID': user.userID,
@@ -147,6 +168,18 @@ def logout():
     return redirect(url_for('main.index'))
 
 
+@bp.route('/remove_image_cart/<string:imageID>', methods=['POST'])
+def remove_cart_item(imageID):
+    if check_user_logged_in() == False:
+        flash('Please log in before remove from cart.', 'error')
+        return redirect(url_for('main.login'))
+    userID = session['user']['userID']
+
+    remove_image_cart(userID, imageID)
+    flash('Image removed from cart.')
+    return redirect(url_for('main.checkout'))
+
+
 @bp.route('/checkout/', methods=['GET', 'POST'])
 def checkout():
     if check_user_logged_in() == False:
@@ -155,8 +188,46 @@ def checkout():
     userID = session['user']['userID']
     listImage = get_image_in_cart(userID)
     totalPrice = sum(image.price for image in listImage)
+    customerInfor = get_customer(session['user']['userID'])
 
-    return render_template('checkout.html', listImage=listImage, totalPrice=totalPrice)
+    # form = CheckoutForm()
+    formPayment = CheckoutFormPayment()
+
+    if request.method == 'POST':
+        if formPayment.validate_on_submit():
+            flash('Payment successful!')
+            return redirect(url_for('main.checkout'))
+        else:
+            flash('The provided information is missing or incorrect', 'error')
+
+    formPayment.firstname.data = session['user']['firstname']
+    formPayment.surname.data = session['user']['surname']
+    formPayment.email.data = session['user']['email']
+    formPayment.phone.data = session['user']['phone']
+
+    # if form.validate_on_submit():
+    #     form.firstname.data = session['user']['firstname']
+    #     form.surname.data = session['user']['surname']
+    #     form.email.data = session['user']['email']
+    #     form.phone.data = session['user']['phone']
+    #     flash("Payment successful!", "success")
+    #     return redirect(url_for('main.checkout_success'))
+    # if formPayment.validate_on_submit():
+
+    #     card_number = form.cardNumber.data
+    #     expiry = form.expiryDate.data
+    #     cvv = form.CVV.data
+
+    #     flash("Payment successful!", "success")
+    #     return redirect(url_for('main.checkout_success'))
+
+    return render_template(
+        'checkout.html',
+        formPayment=formPayment,
+        listImage=listImage,
+        totalPrice=totalPrice,
+        customerInfor=customerInfor
+    )
 
 
 @bp.route('/manage/')
@@ -182,7 +253,8 @@ def handle_manage():
     try:
         if categoryForm.validate_on_submit():
             # Add the new city to the database
-            category = Category(categoryID= generate_uuid(),categoryName=categoryForm.categoryName.data, description=categoryForm.description.data)
+            category = Category(categoryID=generate_uuid(
+            ), categoryName=categoryForm.categoryName.data, description=categoryForm.description.data)
             add_category(category)
             flash('Category added successfully!')
         else:

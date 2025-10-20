@@ -2,9 +2,10 @@ from flask_wtf import FlaskForm
 from wtforms.fields import SubmitField, StringField, PasswordField
 from wtforms.fields import TextAreaField, RadioField, DecimalField, SelectField, FileField, SelectMultipleField
 from wtforms.fields import DateTimeLocalField
-from wtforms.validators import InputRequired, email, Length
+from wtforms.validators import InputRequired, email, Length, Regexp
 from project.models import Currency
 from wtforms.widgets import ListWidget, CheckboxInput
+
 
 
 class AddImageForm(FlaskForm):
@@ -30,7 +31,6 @@ class AddCategoryForm(FlaskForm):
     category = SubmitField("Add Category")
 
 
-# -----------------------------------TEMPLATE-----------------------------------
 
 class CheckoutForm(FlaskForm):
     """Form for user checkout."""
@@ -39,6 +39,28 @@ class CheckoutForm(FlaskForm):
     email = StringField("Your email", validators=[InputRequired()])
     phone = StringField("Your phone number", validators=[InputRequired()])
     submit = SubmitField("Send to Agent")
+class CheckoutFormPayment(FlaskForm):
+    """Form for user checkout."""
+    firstname = StringField("Your first name", validators = [InputRequired()])
+    surname = StringField("Your surname", validators = [InputRequired()])
+    email = StringField("Your email", validators = [InputRequired()])
+    phone = StringField("Your phone number", validators = [InputRequired()])
+    """Payment Information"""
+    cardNumber = StringField("Card Number", validators=[
+        InputRequired(),
+        Regexp(r"^\d{16}$", message="Card number must be 16 digits")
+    ])
+    expiryDate = StringField("Expiry Date (MM/YY)", validators=[InputRequired()])
+    CVV = StringField("CVV", validators=[
+        InputRequired(),
+        Regexp(r"^\d{3}$", message="CVV must be 3 digits")
+    ])
+    submit = SubmitField("Complete Payment")
+
+
+
+# -----------------------------------TEMPLATE-----------------------------------
+
 
 
 class LoginForm(FlaskForm):
