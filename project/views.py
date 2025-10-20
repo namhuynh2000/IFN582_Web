@@ -4,11 +4,12 @@ from datetime import datetime
 
 from hashlib import sha256
 
-from project.db import add_order, get_orders, add_customer, is_admin, get_images, get_ratings, get_user, check_user
+from project.db import (add_category, add_customer, add_order, check_user, get_categories,
+    get_images, get_orders, get_ratings, get_user, is_admin)
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
-from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
-from project.models import City, Tour, Currency, Image, Role
+from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm, AddCategoryForm
+from project.models import City, Tour, Currency, Image, Role, Category
 from project.utils import is_allowed_file, generate_uuid, check_user_logged_in
 from werkzeug.utils import secure_filename
 import os
@@ -37,6 +38,8 @@ def add_cart(imageID):
 @only_vendors
 def vendor():
     addImageForm = AddImageForm()
+    cats = get_categories()
+    addImageForm.categories.choices = [(c.categoryID, c.categoryName) for c in cats]
     if check_user_logged_in() == False:
         flash('Please log in before upload image.', 'error')
         return redirect(url_for('main.login'))
@@ -48,6 +51,8 @@ def vendor():
             description = request.form['description']
             price = request.form['price']
             currency = request.form['currency']
+            
+            print("listCategory: ", listCategory)
 
             if file and is_allowed_file(file.filename):
                 imageUpload = Image(
@@ -116,7 +121,6 @@ def login():
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
             
-            print("user: ", user.role.value)
             # Store full user info in session
             session['user'] = {
                 'userID': user.userID,
@@ -167,47 +171,22 @@ def manage():
         return redirect(url_for('main.index'))
     # now we know the user is logged in and is an admin
     # we can show the manage panel
-    cityform = AddCityForm()
-    tourform = AddTourForm()
-    # we need to populate the cities in the tourform
-    tourform.tour_city.choices = [(image.imageID, image.title)
-                                  for image in get_images()]
-    return render_template('manage.html', cityform=cityform, tourform=tourform)
+    categoryForm = AddCategoryForm()
+    return render_template('manage.html', categoryForm=categoryForm)
 
 
 @bp.post('/manage/')
 @only_admins
 def handle_manage():
-    cityform = AddCityForm()
-    tourform = AddTourForm()
-    # we need to populate the cities in the tourform
-    # otherwise the form will not validate
-    tourform.tour_city.choices = [(city.id, city.name)
-                                  for city in get_cities()]
+    categoryForm = AddCategoryForm()
     try:
-        if cityform.validate_on_submit():
+        if categoryForm.validate_on_submit():
             # Add the new city to the database
-            city = City(
-                id=0,
-                name=cityform.city_name.data,
-                description=cityform.city_description.data,
-                image='brisbane.jpg'
-            )
-            add_city(city)
-            flash('City added successfully!')
-        elif tourform.validate_on_submit():
-            # Add the new tour to the database
-            tour = Tour(
-                id=0,
-                name=tourform.tour_name.data,
-                description=tourform.tour_description.data,
-                price=float(tourform.tour_price.data),
-                city=get_city(tourform.tour_city.data)
-            )
-            add_tour(tour)
-            flash('Tour added successfully!')
+            category = Category(categoryID= generate_uuid(),categoryName=categoryForm.categoryName.data, description=categoryForm.description.data)
+            add_category(category)
+            flash('Category added successfully!')
         else:
-            flash('Failed to add city or tour. Please check your input.')
+            flash('Failed to add Category. Please check your input.')
     except Exception as e:
         flash(f'An error occurred: {e}', 'error')
     return redirect(url_for('main.index'))
@@ -227,15 +206,15 @@ def citytours(cityid):
     return render_template('citytours.html', tours=citytours, city=get_city(cityid))
 
 
-@bp.route('/order_temp/', methods=['GET'])
-def order_():
-    tour_id = request.args.get('tour_id')
+# @bp.route('/order_temp/', methods=['GET'])
+# def order_():
+#     tour_id = request.args.get('tour_id')
 
-    if tour_id:
-        print(f'user requested to add tour id = {tour_id}')
-        add_to_basket(tour_id)
+#     if tour_id:
+#         print(f'user requested to add tour id = {tour_id}')
+#         add_to_basket(tour_id)
 
-    return render_template('order.html', order=order, totalprice=order.total_cost())
+#     return render_template('order.html', order=order, totalprice=order.total_cost())
 
 
 @bp.post('/basket/<int:tour_id>/')
