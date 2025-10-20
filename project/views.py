@@ -4,7 +4,7 @@ from datetime import datetime
 
 from hashlib import sha256
 
-from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings
+from project.db import add_order, get_orders, check_for_user, add_user, is_admin, get_images, get_ratings, get_image
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
@@ -22,6 +22,10 @@ bp = Blueprint('main', __name__)
 def index():
     return render_template('index.html', images=get_images())
 
+@bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
+def item_detail():
+    item = get_image(imageID)
+    return render_template('item.html', item)
 
 @bp.route('/cart/<string:imageID>', methods=['GET', 'POST'])
 def add_cart(imageID):
