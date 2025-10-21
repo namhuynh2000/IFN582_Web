@@ -71,7 +71,7 @@ def get_ratings(userID=None, imageID=None):
     return listRating
 
 
-def get_categories(imageID=None):
+def get_image_categories(imageID=None):
     cur = mysql.connection.cursor()
     cur.execute("""
                 SELECT 
@@ -86,6 +86,18 @@ def get_categories(imageID=None):
     cur.close()
     return listCategory
 
+def get_categories():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+                SELECT * FROM category;
+                """)
+    results = cur.fetchall()
+    listCategory = [Category(categoryName=row['categoryName'], categoryID=row['categoryID'],
+                             description=row['description']) for row in results]
+    cur.close()
+    print("listCategory: ", listCategory)
+    return listCategory
+
 
 def get_images():
     cur = mysql.connection.cursor()
@@ -95,8 +107,9 @@ def get_images():
                 FROM image;
                 """)
     results = cur.fetchall()
+    print("Results:", results)
     listImage = [Image(
-        userID=row['userID'], listCategory=get_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
+        userID=row['userID'], listCategory=get_image_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
         price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
         updateDate=datetime.combine(row['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=row['imageID'])) for row in results]
 
@@ -113,13 +126,33 @@ def get_image(imageID: str):
                 """, [imageID])
     result = cur.fetchone()
     image = Image(
-        userID=result['userID'], listCategory=get_categories(imageID=result['imageID']), imageID=result['imageID'], title=result['title'], description=result['description'],
+        userID=result['userID'], listCategory=get_image_categories(imageID=result['imageID']), imageID=result['imageID'], title=result['title'], description=result['description'],
         price=float(result['price']), quantity=int(result['quantity']), currency=result['currency'], imageStatus=result['imageStatus'], extension=result['extension'],
         updateDate=datetime.combine(result['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=result['imageID'])
     ) if result else None
 
     cur.close()
     return image
+
+def config_image(imageID: str, isDeleted: bool):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE image
+        SET isDeleted = %s
+        WHERE imageID = %s
+    """, [isDeleted, imageID])
+    mysql.connection.commit()
+    cur.close()
+    
+def config_user(userID: str, isDeleted: bool):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        UPDATE user
+        SET isDeleted = %s
+        WHERE userID = %s
+    """, [isDeleted, userID])
+    mysql.connection.commit()
+    cur.close()
 
 
 def get_image_in_cart(userID: str):
@@ -137,13 +170,19 @@ def get_image_in_cart(userID: str):
 
 def add_image(image: Image):
     cur = mysql.connection.cursor()
-    query = """
+    queryAddImage = """
         INSERT INTO image (
             imageID, userID, title, description, price, currency,
             updateDate, imageStatus, quantity, extension
         ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    data = (
+    queryAddImageCategory = """
+        INSERT INTO ImageCategory (
+            categoryID, imageID
+        ) VALUES (%s, %s)
+    """
+
+    dataImage = (
         image.imageID,
         image.userID,
         # '38850c01-a90d-11f0-9f66-700894b19280',  # Placeholder vendorID
@@ -156,10 +195,26 @@ def add_image(image: Image):
         image.quantity,
         image.extension
     )
-    cur.execute(query, data)
+    
+    dataImageCategory = [(
+        category,
+        image.imageID
+    ) for category in image.listCategory]
+    
+    cur.execute(queryAddImage, dataImage)
+    cur.executemany(queryAddImageCategory, dataImageCategory)
     mysql.connection.commit()
     cur.close()
 
+def add_category(category: Category):
+    cur = mysql.connection.cursor()
+    query = """
+        INSERT INTO Category (categoryID, categoryName, description) VALUES (%s, %s, %s)
+    """
+    data = (category.categoryID, category.categoryName, category.description)
+    cur.execute(query, data)
+    mysql.connection.commit()
+    cur.close()
 
 def add_to_cart(userID: str, imageID: str):
     cur = mysql.connection.cursor()
@@ -185,6 +240,7 @@ def get_user(username, password):
         WHERE username = %s AND password = %s
     """, (username, password))
     row = cur.fetchone()
+    print("row:", row)
     cur.close()
     if row:
         if row['role'] == Role.ADMIN.value:
@@ -194,6 +250,17 @@ def get_user(username, password):
         elif row['role'] == Role.VENDOR.value:
             return get_vendor(row['userID'])
     return None
+
+def remove_image_cart(userID: str, imageID: str):
+    cur = mysql.connection.cursor()
+    query = """
+        DELETE FROM CartImage
+        WHERE userID = %s AND imageID = %s
+    """
+    data = (userID, imageID)
+    cur.execute(query, data)
+    mysql.connection.commit()
+    cur.close()
 
 
 def get_admin(userID: str):
@@ -214,11 +281,12 @@ def get_customer(userID: str):
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT *
-        FROM user
-        JOIN customer ON user.userID = customer.userID
-        WHERE user.userID = %s
+        FROM user AS u
+        JOIN customer AS c ON u.userID = c.userID
+        WHERE u.userID = %s
     """, (userID,))
     row = cur.fetchone()
+    print("Customer row:", row)
     cur.close()
     if row:
         return Customer(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'])
