@@ -70,7 +70,7 @@
                 <img class="card-img-top"
                     src="{{ url_for('static', filename='img/' + image.imageID + image.extension) }}" alt="Card image">
                 <div class="card-body">
-                    <h4 class="card-title">{{ image.title }}</h4>
+                    <a class="card-title" href="{{url_for('main.item_detail', imageID = image.imageID)}}">{{ image.title }}</h4>
                     <p class="card-text">{{ image.description }}</p>
                 </div>
                 <div class="card-footer">

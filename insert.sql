@@ -9,13 +9,13 @@ SET
   @cust1   = UUID(),
   @cust2   = UUID();
 
-INSERT INTO `User` (userID, username, password, email, firstname, surname, phone, role) VALUES
-(@admin1,  'admin_anne', 'hash_admin1', 'anne@site.test',  'Anne',  'Admin',  '111-111', 'Admin'),
-(@admin2,  'admin_alan', 'hash_admin2', 'alan@site.test',  'Alan',  'Admin',  '111-112', 'Admin'),
-(@vendor1, 'vendor_viv', 'hash_vend1',  'viv@site.test',   'Viv',   'Vendor', '222-201', 'Vendor'),
-(@vendor2, 'vendor_val', 'hash_vend2',  'val@site.test',   'Val',   'Vendor', '222-202', 'Vendor'),
-(@cust1,   'cust_cara',  'hash_cus1',   'cara@site.test',  'Cara',  'Cust',   '333-301', 'Customer'),
-(@cust2,   'cust_carl',  'hash_cus2',   'carl@site.test',  'Carl',  'Cust',   '333-302', 'Customer');
+INSERT INTO `User` (userID, username, password, email, firstname, surname, phone, role, isDeleted) VALUES
+(@admin1,  'admin_anne', 'hash_admin1', 'anne@site.test',  'Anne',  'Admin',  '111-111', 'Admin', False),
+(@admin2,  'admin_alan', 'hash_admin2', 'alan@site.test',  'Alan',  'Admin',  '111-112', 'Admin', False),
+(@vendor1, 'vendor_viv', 'hash_vend1',  'viv@site.test',   'Viv',   'Vendor', '222-201', 'Vendor', False),
+(@vendor2, 'vendor_val', 'hash_vend2',  'val@site.test',   'Val',   'Vendor', '222-202', 'Vendor', False),
+(@cust1,   'cust_cara',  'hash_cus1',   'cara@site.test',  'Cara',  'Cust',   '333-301', 'Customer', False),
+(@cust2,   'cust_carl',  'hash_cus2',   'carl@site.test',  'Carl',  'Cust',   '333-302', 'Customer', True);
 
 -- Admin profile rows
 INSERT INTO Admin (userID) VALUES
@@ -51,28 +51,28 @@ SET
   @img11 = UUID(), @img12 = UUID(), @img13 = UUID(), @img14 = UUID(), @img15 = UUID();
 
 -- Vendor1 (Nature)
-INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension) VALUES
-(@img1,  @vendor1, 'Sunrise Ridge', 'Golden sunrise over hills',  19.99, 'USD', '2025-10-01', 'Active', 100, '.png'),
-(@img2,  @vendor1, 'Forest Path',   'Misty forest trail',         14.50, 'USD', '2025-09-28', 'Active', 100, '.png'),
-(@img3,  @vendor1, 'Ocean Wave',    'Crashing wave close-up',     17.25, 'USD', '2025-09-25', 'Active', 100, '.png'),
-(@img4,  @vendor1, 'Autumn Leaves', 'Fallen leaves macro',        12.00, 'USD', '2025-09-20', 'Active', 100, '.png'),
-(@img5,  @vendor1, 'Mountain Peak', 'Snowy summit',               21.99, 'USD', '2025-09-18', 'Active', 100, '.png');
+INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension, isDeleted) VALUES
+(@img1,  @vendor1, 'Sunrise Ridge', 'Golden sunrise over hills',  19.99, 'USD', '2025-10-01', 'Active', 100, '.png', False),
+(@img2,  @vendor1, 'Forest Path',   'Misty forest trail',         14.50, 'USD', '2025-09-28', 'Active', 100, '.png', False),
+(@img3,  @vendor1, 'Ocean Wave',    'Crashing wave close-up',     17.25, 'USD', '2025-09-25', 'Active', 100, '.png', False),
+(@img4,  @vendor1, 'Autumn Leaves', 'Fallen leaves macro',        12.00, 'USD', '2025-09-20', 'Active', 100, '.png', False),
+(@img5,  @vendor1, 'Mountain Peak', 'Snowy summit',               21.99, 'USD', '2025-09-18', 'Active', 100, '.png', False);
 
 -- Vendor2 (City)
-INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension) VALUES
-(@img6,  @vendor2, 'Night Avenue', 'City avenue at night',        15.99, 'USD', '2025-09-30', 'Active', 100, '.png'),
-(@img7,  @vendor2, 'Old Bridge',   'Historic bridge span',        13.49, 'USD', '2025-09-27', 'Active', 100, '.png'),
-(@img8,  @vendor2, 'Metro Lines',  'Subway long exposure',        16.75, 'USD', '2025-09-23', 'Active', 100, '.png'),
-(@img9,  @vendor2, 'Neon Alley',   'Neon-lit alley',              11.50, 'USD', '2025-09-19', 'Active', 100, '.png'),
-(@img10, @vendor2, 'City Sunset',  'Skyline silhouette',          18.20, 'USD', '2025-09-15', 'Active', 100, '.png');
+INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension, isDeleted) VALUES
+(@img6,  @vendor2, 'Night Avenue', 'City avenue at night',        15.99, 'USD', '2025-09-30', 'Active', 100, '.png', False),
+(@img7,  @vendor2, 'Old Bridge',   'Historic bridge span',        13.49, 'USD', '2025-09-27', 'Active', 100, '.png', False),
+(@img8,  @vendor2, 'Metro Lines',  'Subway long exposure',        16.75, 'USD', '2025-09-23', 'Active', 100, '.png', False),
+(@img9,  @vendor2, 'Neon Alley',   'Neon-lit alley',              11.50, 'USD', '2025-09-19', 'Active', 100, '.png', False),
+(@img10, @vendor2, 'City Sunset',  'Skyline silhouette',          18.20, 'USD', '2025-09-15', 'Active', 100, '.png', False);
 
 -- Vendor2 (Abstract)
-INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension) VALUES
-(@img11, @vendor2, 'Glass Prism',  'Prismatic colors',             9.99, 'USD', '2025-09-10', 'Active', 100, '.png'),
-(@img12, @vendor2, 'Oil Swirl',    'Liquid abstract',              8.50, 'USD', '2025-09-08', 'Active', 100, '.png'),
-(@img13, @vendor2, 'Paper Folds',  'Monochrome folds',             7.75, 'USD', '2025-09-05', 'Active', 100, '.png'),
-(@img14, @vendor2, 'Light Trails', 'Long-exposure trails',        10.25, 'USD', '2025-09-03', 'Active', 100, '.png'),
-(@img15, @vendor2, 'Color Grid',   'Geometric palette',            9.25, 'USD', '2025-09-01', 'Active', 100, '.png');
+INSERT INTO Image (imageID, userID, title, description, price, currency, updateDate, imageStatus, quantity, extension, isDeleted) VALUES
+(@img11, @vendor2, 'Glass Prism',  'Prismatic colors',             9.99, 'USD', '2025-09-10', 'Active', 100, '.png', False),
+(@img12, @vendor2, 'Oil Swirl',    'Liquid abstract',              8.50, 'USD', '2025-09-08', 'Active', 100, '.png', False),
+(@img13, @vendor2, 'Paper Folds',  'Monochrome folds',             7.75, 'USD', '2025-09-05', 'Active', 100, '.png', False),
+(@img14, @vendor2, 'Light Trails', 'Long-exposure trails',        10.25, 'USD', '2025-09-03', 'Active', 100, '.png', False),
+(@img15, @vendor2, 'Color Grid',   'Geometric palette',            9.25, 'USD', '2025-09-01', 'Active', 100, '.png', False);
 
 -- IMAGE ↔ CATEGORY
 INSERT INTO ImageCategory (categoryID, imageID) VALUES

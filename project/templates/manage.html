@@ -3,7 +3,7 @@
 {% import 'bootstrap5/form.html' as wtf %}
 
 {% block head %}
-   <h1 class="display-5 text-center mt-3 mb-3">Manage Toursite Data</h1>
+   <h1 class="display-5 text-center mt-3 mb-3">Manage Photosite</h1>
    <p class="lead text-center">
         These forms are for adding new cities and tours for users to book.
     </p>
@@ -13,15 +13,15 @@
     
     <details class="mb-3 shadow-lg rounded">
         <summary class="text-bg-danger ps-2 rounded">
-            <span class="lead">Add City</span>
+            <span class="lead">Add Category</span>
         </summary>
         <div class="row justify-content-center p-3">
             <div class="col-md-6">
                 <p>
-                    Adds a new city to the database. 
+                    Adds a new Category to the database. 
                     <br>
                 </p>
-                {{ wtf.render_form(cityform) }}
+                {{ wtf.render_form(categoryForm) }}
             </div>
         </div>
     </details>
@@ -36,7 +36,6 @@
                     Adds a new tour to an existing city. 
                     <br>
                 </p>
-                {{ wtf.render_form(tourform) }}
             </div>
         </div>
     </details>

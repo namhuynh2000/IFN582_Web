@@ -28,8 +28,10 @@ CREATE TABLE User (
   surname   VARCHAR(100),
   phone     VARCHAR(20),
   role      ENUM('Admin','Customer','Vendor') NOT NULL DEFAULT 'Customer',
+  isDeleted BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (userID)
 );
+
 
 CREATE TABLE Admin (
   userID CHAR(36) NOT NULL,
@@ -87,6 +89,7 @@ CREATE TABLE Image (
   imageStatus ENUM('Active','Draft') NOT NULL DEFAULT 'Active',
   quantity    INT            NOT NULL DEFAULT 0,
   extension   VARCHAR(10)    NOT NULL,
+  isDeleted   BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (imageID),
   CONSTRAINT fk_img_vendor
     FOREIGN KEY (userID) REFERENCES Vendor(userID)
