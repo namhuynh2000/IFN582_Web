@@ -84,7 +84,7 @@ class RegisterForm(FlaskForm):
     firstname = StringField("Your first name", validators = [InputRequired()])
     surname = StringField("Your surname", validators = [InputRequired()])
     phone = StringField("Your phone number", validators = [InputRequired()])
-    role = RadioField("Role", choices=[(Role.CUSTOMER,Role.CUSTOMER.value), (Role.VENDOR, Role.VENDOR.value)], validators=[InputRequired()])
+    role = RadioField("Role", choices=[(Role.CUSTOMER.value, Role.CUSTOMER.value), (Role.VENDOR.value, Role.VENDOR.value)], validators=[InputRequired()])
     submit = SubmitField("Make Account")
 
 

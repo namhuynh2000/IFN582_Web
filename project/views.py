@@ -4,7 +4,8 @@ from flask import (
 )
 from datetime import datetime
 from flask import send_file, Response
-from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image
+from project.db import (add_image, config_image, edit_image,
+    get_images_by_vendor)
 from hashlib import sha256
 from project.forms import EditImageForm
 from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user
@@ -154,7 +155,7 @@ def update_image(imageID):
 @bp.route('/vendor/delete_image/<imageID>', methods=['POST'])
 @only_vendors
 def delete_image(imageID):
-    success = delete_selected_image(imageID)
+    success = config_image(imageID, True)
     if success:
         flash("Image deleted successfully!", "success")
     else:
@@ -177,9 +178,9 @@ def register():
                 return redirect(url_for('main.register'))
 
             # I want to insert user based on role
-            if form.role.data == Role.CUSTOMER:
+            if form.role.data == Role.CUSTOMER.value:
                 add_customer(form)
-            elif form.role.data == Role.VENDOR:
+            elif form.role.data == Role.VENDOR.value:
                 add_vendor(form)
 
             flash('Registration successful!')
