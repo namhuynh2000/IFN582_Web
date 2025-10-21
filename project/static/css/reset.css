@@ -30,12 +30,12 @@ body {
   background-color: #09bbf1;
 }
 
-header {
+/* header {
   background: #09bbf1;
   color: #ffffff;
   padding: 10px 20px;
   text-align: left;
-}
+} */
 
 footer {
   text-align: center;
@@ -270,9 +270,9 @@ legend {
  20251018: Jacky
  */
 
-nav {
+/* nav {
   margin: 10px 0;
-}
+} */
 
 nav input[type="text"] {
   padding: 5px;
