@@ -192,6 +192,27 @@ def edit_image(imageID, title, description, price, currency):
         return False
     finally:
         cur.close()
+        
+#delete image from vendor management but still existing in database (change status to false)
+def delete_selected_image(image_id):
+    # fetch the image
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT * FROM image WHERE imageID = %s", (image_id,))
+    image = cur.fetchone()
+
+    if not image:
+        cur.close()
+        return False
+
+    # delete selected image
+    cur.execute(""" 
+                UPDATE image 
+                SET isDeleted = TRUE
+                WHERE imageID = %s;""", (image_id,))
+    mysql.connection.commit()
+    cur.close()
+
+    return True
 def config_image(imageID: str, isDeleted: bool):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -295,7 +316,7 @@ def get_user(username, password):
     cur.execute("""
         SELECT *
         FROM user
-        WHERE username = %s AND password = %s
+        WHERE username = %s AND password = %s AND isDeleted = 0
     """, (username, password))
     row = cur.fetchone()
     print("row:", row)
@@ -370,10 +391,10 @@ def add_customer(form, is_vendor=False):
     cur = mysql.connection.cursor()
     userID = generate_uuid()
     cur.execute("""
-        INSERT INTO user (userID, username, password, email, firstname, surname, phone, role)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO user (userID, username, password, email, firstname, surname, phone, role, isDeleted)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     """, (userID, form.username.data, form.password.data, form.email.data,
-          form.firstname.data, form.surname.data, form.phone.data, Role.VENDOR.value if is_vendor else Role.CUSTOMER.value))
+          form.firstname.data, form.surname.data, form.phone.data, Role.VENDOR.value if is_vendor else Role.CUSTOMER.value, 0))
     cur.execute("""
         INSERT INTO customer (userID, customerRank)
         VALUES (%s, %s)
@@ -418,7 +439,7 @@ def check_user(username: str):
     cur.execute("""
         SELECT *
         FROM user
-        WHERE username = %s
+        WHERE username = %s AND isDeleted = 0
     """, (username,))
     row = cur.fetchone()
     cur.close()
