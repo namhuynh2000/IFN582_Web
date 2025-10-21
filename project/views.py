@@ -4,11 +4,11 @@ from flask import (
 )
 from datetime import datetime
 from flask import send_file, Response
-from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories
 from hashlib import sha256
 from project.forms import EditImageForm
-from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user
-from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
+from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image
+from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart, update_image_categories
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
 from project.models import City, Tour, Currency, Image, Role
@@ -68,20 +68,23 @@ def add_cart(imageID):
 @only_vendors
 def vendor():
     addImageForm = AddImageForm()
-    #edit_forms = EditImageForm()
-    
-    #each vendor can view only what they upload in vendor page
-
     userID = session['user']['userID']
     vendor_images = get_images_by_vendor(userID)
-    edit_forms = {img.imageID: EditImageForm(obj=img) for img in vendor_images}
-     
-    cats = get_categories()
-    addImageForm.categories.choices = [
-        (c.categoryID, c.categoryName) for c in cats]
+
+    edit_forms = {}
+    for img in vendor_images:
+        form = EditImageForm(obj=img)
+        # Populate all available categories
+        form.categories.choices = get_all_categories()  # returns [(id, name), ...]
+        form.imageStatus.data = img.imageStatus
+        # Pre-check the assigned categories
+        form.categories.data = [c.categoryID for c in img.listCategory]
+        edit_forms[img.imageID] = form
+
     if check_user_logged_in() == False:
         flash('Please log in before upload image.', 'error')
         return redirect(url_for('main.login'))
+
     if request.method == 'POST':
         if addImageForm.validate_on_submit():
             file = request.files['image_file']
@@ -90,8 +93,6 @@ def vendor():
             description = request.form['description']
             price = request.form['price']
             currency = request.form['currency']
-
-            print("listCategory: ", listCategory)
 
             if file and is_allowed_file(file.filename):
                 imageUpload = Image(
@@ -106,24 +107,17 @@ def vendor():
                     imageStatus='ACTIVE',
                     updateDate=datetime.now(),
                     listRatings=[],
-                    extension=os.path.splitext(
-                        secure_filename(file.filename))[1]
+                    extension=os.path.splitext(secure_filename(file.filename))[1]
                 )
-
-                # filename = secure_filename(file.filename)
-                save_path = os.path.join(
-                    current_app.config['UPLOAD_FOLDER'], imageUpload.imageID + imageUpload.extension)
-                #save_path = os.path.join('project', 'static', 'img', imageUpload.imageID + imageUpload.extension)
+                save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], imageUpload.imageID + imageUpload.extension)
                 file.save(save_path)
 
                 add_image(imageUpload)
-                #vendor_id = row['vendor_id']
-                #vendor_images = get_images_by_vendor(vendor_id)
                 flash("Image uploaded successfully!")
                 return redirect(url_for('main.vendor'))
-                
             else:
                 flash("Invalid file type! Only png, jpg, jpeg allowed.", 'error')
+
     return render_template('vendor.html', addImageForm=addImageForm, vendor_images=vendor_images, edit_forms=edit_forms)
 
 #To update image's details in vendor.html page
@@ -132,25 +126,42 @@ def vendor():
 @only_vendors
 def update_image(imageID):
     userID = session['user']['userID']
-    vendor_images = get_images_by_vendor(userID)
-    edit_forms = {img.imageID: EditImageForm(obj=img) for img in vendor_images}
-     
-    form = edit_forms.get(imageID)
+
+    #Fetch the image from db
+    img = get_image(imageID)
+    if not img or img.userID != userID:
+        flash("Image not found.", "error")
+        return redirect(url_for('main.vendor'))
+
+    # Initialize the form
+    form = EditImageForm(obj=img)
+    form.categories.choices = get_all_categories()  
+    
+    
     if form.validate_on_submit():
+        # Get selected categories of image
+        selected_categories = form.categories.data  
+        
+        # Update into image table
         success = edit_image(
             imageID,
             form.title.data,
             form.description.data,
             float(form.price.data),
-            form.currency.data
+            form.currency.data,
+            form.imageStatus.data,
+            selected_categories
+            
         )
+
         if success:
             flash("Image updated successfully!", "success")
         else:
             flash("Failed to update image.", "error")
+
     return redirect(url_for('main.vendor'))
 
-#To delete the existing images via vendor.html page
+# Vendor site, to delete the existing images via vendor.html page
 @bp.route('/vendor/delete_image/<imageID>', methods=['POST'])
 @only_vendors
 def delete_image(imageID):
@@ -176,7 +187,7 @@ def register():
                 flash('User already exists', 'error')
                 return redirect(url_for('main.register'))
 
-            # I want to insert user based on role
+            # To insert user based on role
             if form.role.data == Role.CUSTOMER:
                 add_customer(form)
             elif form.role.data == Role.VENDOR:
@@ -198,10 +209,9 @@ def login():
             # form.password.data = sha256(
             #     form.password.data.encode()).hexdigest()
             user = get_user(form.username.data, form.password.data)
-            if not user:
+            if not user or user.isDeleted:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
-
             # Store full user info in session
             session['user'] = {
                 'userID': user.userID,
@@ -216,6 +226,8 @@ def login():
             if user.role.value == Role.ADMIN.value:
                 return redirect(url_for('main.manage'))
             return redirect(url_for('main.index'))
+        
+
 
     return render_template('login.html', form=form)
 

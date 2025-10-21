@@ -3,6 +3,7 @@ from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount
 from datetime import datetime
 from project.utils import generate_uuid
 from . import mysql
+from project.models import User
 
 
 def get_ratings(userID=None, imageID=None):
@@ -71,19 +72,27 @@ def get_ratings(userID=None, imageID=None):
     return listRating
 
 
-def get_image_categories(imageID=None):
+def get_image_categories(imageID):
+    
     cur = mysql.connection.cursor()
     cur.execute("""
-                SELECT 
-                    *
-                FROM category AS c
-                JOIN ImageCategory AS ic ON c.categoryID = ic.categoryID
-                WHERE ic.imageID = %s;
-                """, [imageID])
+        SELECT c.categoryID, c.categoryName, c.description
+        FROM category c
+        JOIN imagecategory ic ON c.categoryID = ic.categoryID
+        WHERE ic.imageID = %s
+    """, (imageID,))
     results = cur.fetchall()
-    listCategory = [Category(categoryName=row['categoryName'], categoryID=row['categoryID'],
-                             description=row['description']) for row in results]
     cur.close()
+
+    listCategory = [
+        Category(
+            categoryID=row['categoryID'],
+            categoryName=row['categoryName'],
+            description=row.get('description', '')  
+        )
+        for row in results
+    ]
+
     return listCategory
 
 #This is for list all images
@@ -99,7 +108,49 @@ def get_categories():
     print("listCategory: ", listCategory)
     return listCategory
 
+#Vendor site, to get only categoryID and categoryName for each image
+def get_all_categories():
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT categoryID, categoryName FROM category ORDER BY categoryName ASC")
+    results = cur.fetchall()
+    cur.close()
+    return [(str(r['categoryID']), r['categoryName']) for r in results]
 
+#Vendor site, to fetch seleted categories based on each imageID
+def get_categories_by_image(imageID):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT c.categoryID
+        FROM image i
+        JOIN imagecategory ic ON i.imageID = ic.imageID
+        JOIN category c ON ic.categoryID = c.categoryID
+        WHERE i.imageID = %s
+    """, (imageID,))
+    rows = cur.fetchall()
+    cur.close()
+    return [str(row['categoryID']) for row in rows]
+#Vendor site, to update image's categories via vendor management
+def update_image_categories(imageID, categoryIDs):
+    
+    cur = mysql.connection.cursor()
+    try:
+        # Delete old category assignments
+        cur.execute("DELETE FROM imagecategory WHERE imageID = %s", (imageID,))
+        
+        # Insert new category assignments
+        for cat_id in categoryIDs:
+            cur.execute(
+                "INSERT INTO imagecategory (imageID, categoryID) VALUES (%s, %s)",
+                (imageID, cat_id)
+            )
+        mysql.connection.commit()
+    except Exception as e:
+        print("Error updating image categories:", e)
+        mysql.connection.rollback()
+    finally:
+        cur.close()
+        
+        
 def get_images():
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -135,9 +186,6 @@ def get_image(imageID: str):
     return image
 #To display all images in vendor management
 def get_images_by_vendor(vendor_id):
-    """
-    Retrieve all images uploaded by a specific vendor.
-    """
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT i.imageID, i.userID, i.title, i.description, i.price,
@@ -149,9 +197,10 @@ def get_images_by_vendor(vendor_id):
     results = cur.fetchall()
     cur.close()
 
-    # Convert SQL rows to Image objects (if you have an Image class)
     images = []
     for row in results:
+        # Fetch categories for each image 
+        categories = get_image_categories(imageID=row['imageID'])  
         images.append(
             Image(
                 imageID=str(row['imageID']),
@@ -159,31 +208,38 @@ def get_images_by_vendor(vendor_id):
                 title=row['title'],
                 description=row['description'],
                 price=float(row['price']),
-                currency=(row['currency']),
+                currency=row['currency'],
                 imageStatus=row['imageStatus'],
                 updateDate=row['updateDate'],
                 extension=row['extension'],
-                listRatings=[],
+                listRatings=[],  
                 quantity=0,
-                listCategory=[]
+                listCategory=categories  
             )
         )
 
     return images
 
 #Update an existing image's details via vendor management
-def edit_image(imageID, title, description, price, currency):  
+def edit_image(imageID, title, description, price, currency, imageStatus, category_ids):
     cur = mysql.connection.cursor()
     try:
+        
         cur.execute("""
             UPDATE image
-            SET title = %s,
-                description = %s,
-                price = %s,
-                currency = %s,
-                updateDate = NOW()
-            WHERE imageID = %s
-        """, (title, description, price, currency, imageID))
+            SET title=%s, description=%s, price=%s, currency=%s, imageStatus=%s, updateDate=NOW()
+            WHERE imageID=%s
+        """, (title, description, price, currency, imageStatus, imageID))
+
+        #To delete and add new category
+        cur.execute("DELETE FROM imagecategory WHERE imageID=%s", (imageID,))
+
+        for cat_id in category_ids:
+            cur.execute(
+                "INSERT INTO imagecategory (imageID, categoryID) VALUES (%s, %s)",
+                (imageID, cat_id)
+            )
+
         mysql.connection.commit()
         return True
     except Exception as e:
@@ -194,10 +250,10 @@ def edit_image(imageID, title, description, price, currency):
         cur.close()
         
 #delete image from vendor management but still existing in database (change status to false)
-def delete_selected_image(image_id):
+def delete_selected_image(image_id, isDeleted: bool):
     # fetch the image
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM image WHERE imageID = %s", (image_id,))
+    cur.execute("SELECT * FROM image WHERE imageID = %s", (isDeleted,image_id))
     image = cur.fetchone()
 
     if not image:
@@ -316,12 +372,13 @@ def get_user(username, password):
     cur.execute("""
         SELECT *
         FROM user
-        WHERE username = %s AND password = %s AND isDeleted = 0
+        WHERE username = %s AND password = %s AND isDeleted = FALSE
     """, (username, password))
     row = cur.fetchone()
     print("row:", row)
     cur.close()
     if row:
+        
         if row['role'] == Role.ADMIN.value:
             return get_admin(row['userID'])
         elif row['role'] == Role.CUSTOMER.value:
@@ -390,21 +447,29 @@ def get_vendor(userID: str):
 def add_customer(form, is_vendor=False):
     cur = mysql.connection.cursor()
     userID = generate_uuid()
+
+    # if user is not vendor, then become only customer
+    role_value = Role.VENDOR.value if is_vendor else Role.CUSTOMER.value
+
+    # Insert into user table with isDeleted default FALSE
     cur.execute("""
         INSERT INTO user (userID, username, password, email, firstname, surname, phone, role, isDeleted)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-    """, (userID, form.username.data, form.password.data, form.email.data,
-          form.firstname.data, form.surname.data, form.phone.data, Role.VENDOR.value if is_vendor else Role.CUSTOMER.value, 0))
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, FALSE)
+    """, (userID,form.username.data,form.password.data,form.email.data,form.firstname.data,form.surname.data,form.phone.data,role_value))
+
+    # Insert into customer table
     cur.execute("""
         INSERT INTO customer (userID, customerRank)
         VALUES (%s, %s)
     """, (userID, CustomerRank.BRONZE.value))
+
+    # If vendor, insert into vendor table
     if is_vendor:
         cur.execute("""
             INSERT INTO vendor (userID, bio, portfolio)
             VALUES (%s, %s, %s)
         """, (userID, '', ''))
-        
+
     mysql.connection.commit()
     cur.close()
 

@@ -3,9 +3,8 @@ from wtforms.fields import SubmitField, StringField, PasswordField
 from wtforms.fields import TextAreaField, RadioField, DecimalField, SelectField, FileField, SelectMultipleField
 from wtforms.fields import DateTimeLocalField
 from wtforms.validators import InputRequired, email, Length, Regexp
-from project.models import Currency, Role
+from project.models import Currency, Role, ImageStatus
 from wtforms.widgets import ListWidget, CheckboxInput
-
 
 
 class AddImageForm(FlaskForm):
@@ -28,6 +27,13 @@ class EditImageForm(FlaskForm):
     description = TextAreaField("Image Description", validators = [InputRequired()])
     price = DecimalField("Image Price", validators = [InputRequired()])
     currency = SelectField("Currency", choices = [(c.value, c.name) for c in Currency], validators = [InputRequired()])
+    categories = SelectMultipleField(
+        "Category",
+        choices=[], 
+        coerce=str,
+        option_widget=CheckboxInput(),
+        widget=ListWidget(prefix_label=True))
+    imageStatus = RadioField("Image Status", choices=[(ImageStatus.ACTIVE.value, "ACTIVE"), (ImageStatus.DRAFT.value, "DRAFT")],validators=[InputRequired()])
     submit = SubmitField('Save Changes')
 
 class AddCategoryForm(FlaskForm):
