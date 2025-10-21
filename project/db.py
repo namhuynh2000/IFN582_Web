@@ -86,7 +86,7 @@ def get_categories(imageID=None):
     cur.close()
     return listCategory
 
-
+#This is for list all images
 def get_images():
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -102,7 +102,6 @@ def get_images():
 
     cur.close()
     return listImage
-
 
 def get_image(imageID: str):
     cur = mysql.connection.cursor()
@@ -120,7 +119,65 @@ def get_image(imageID: str):
 
     cur.close()
     return image
+#To display all images in vendor management
+def get_images_by_vendor(vendor_id):
+    """
+    Retrieve all images uploaded by a specific vendor.
+    """
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT i.imageID, i.userID, i.title, i.description, i.price,
+               i.currency, i.extension, i.imageStatus, i.updateDate
+        FROM image i
+        WHERE i.userID = %s AND i.isDeleted = False
+        ORDER BY i.updateDate DESC
+    """, (vendor_id,))
+    results = cur.fetchall()
+    cur.close()
 
+    # Convert SQL rows to Image objects (if you have an Image class)
+    images = []
+    for row in results:
+        images.append(
+            Image(
+                imageID=str(row['imageID']),
+                userID=row['userID'],
+                title=row['title'],
+                description=row['description'],
+                price=float(row['price']),
+                currency=(row['currency']),
+                imageStatus=row['imageStatus'],
+                updateDate=row['updateDate'],
+                extension=row['extension'],
+                listRatings=[],
+                quantity=0,
+                listCategory=[]
+            )
+        )
+
+    return images
+
+#Update an existing image's details via vendor management
+def edit_image(imageID, title, description, price, currency):  
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("""
+            UPDATE image
+            SET title = %s,
+                description = %s,
+                price = %s,
+                currency = %s,
+                updateDate = NOW()
+            WHERE imageID = %s
+        """, (title, description, price, currency, imageID))
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error updating image:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
 
 def get_image_in_cart(userID: str):
     cur = mysql.connection.cursor()
@@ -134,7 +191,7 @@ def get_image_in_cart(userID: str):
     cur.close()
     return listImage
 
-
+#add new image in vendor management
 def add_image(image: Image):
     cur = mysql.connection.cursor()
     query = """
@@ -240,21 +297,29 @@ def get_vendor(userID: str):
         return Vendor(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'], bio=row['bio'], portfolio=row['portfolio'])
     return None
 
-
-def add_customer(form):
+def add_customer(form, is_vendor=False):
     cur = mysql.connection.cursor()
     userID = generate_uuid()
     cur.execute("""
-        INSERT INTO user (userID, username, password, email, firstname, surname, phone)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO user (userID, username, password, email, firstname, surname, phone, role)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """, (userID, form.username.data, form.password.data, form.email.data,
-          form.firstname.data, form.surname.data, form.phone.data))
+          form.firstname.data, form.surname.data, form.phone.data, Role.VENDOR.value if is_vendor else Role.CUSTOMER.value))
     cur.execute("""
         INSERT INTO customer (userID, customerRank)
         VALUES (%s, %s)
     """, (userID, CustomerRank.BRONZE.value))
+    if is_vendor:
+        cur.execute("""
+            INSERT INTO vendor (userID, bio, portfolio)
+            VALUES (%s, %s, %s)
+        """, (userID, '', ''))
+        
     mysql.connection.commit()
     cur.close()
+
+def add_vendor(form):
+    add_customer(form, is_vendor=True)
 
 
 #temp debug

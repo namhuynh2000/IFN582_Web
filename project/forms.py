@@ -3,7 +3,7 @@ from wtforms.fields import SubmitField, StringField, PasswordField
 from wtforms.fields import TextAreaField, RadioField, DecimalField, SelectField, FileField
 from wtforms.fields import DateTimeLocalField
 from wtforms.validators import InputRequired, email
-from project.models import Currency
+from project.models import Currency, Role
 
 class AddImageForm(FlaskForm):
     """Form for uploading an image."""
@@ -14,6 +14,12 @@ class AddImageForm(FlaskForm):
     image_file = FileField("Image File", validators = [InputRequired()])  # This will be handled in the view
     submit = SubmitField("Upload Image")
 
+class EditImageForm(FlaskForm):
+    title = StringField("Image Title", validators = [InputRequired()])
+    description = TextAreaField("Image Description", validators = [InputRequired()])
+    price = DecimalField("Image Price", validators = [InputRequired()])
+    currency = SelectField("Currency", choices = [(c.value, c.name) for c in Currency], validators = [InputRequired()])
+    submit = SubmitField('Save Changes')
 
 # -----------------------------------TEMPLATE-----------------------------------
 
@@ -39,6 +45,7 @@ class RegisterForm(FlaskForm):
     firstname = StringField("Your first name", validators = [InputRequired()])
     surname = StringField("Your surname", validators = [InputRequired()])
     phone = StringField("Your phone number", validators = [InputRequired()])
+    role = RadioField("Role", choices=[(Role.CUSTOMER,Role.CUSTOMER), (Role.VENDOR, Role.VENDOR)], validators=[InputRequired()])
     submit = SubmitField("Make Account")
 
 
