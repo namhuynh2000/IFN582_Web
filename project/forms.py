@@ -3,7 +3,7 @@ from wtforms.fields import SubmitField, StringField, PasswordField
 from wtforms.fields import TextAreaField, RadioField, DecimalField, SelectField, FileField, SelectMultipleField
 from wtforms.fields import DateTimeLocalField
 from wtforms.validators import InputRequired, email, Length, Regexp
-from project.models import Currency
+from project.models import Currency, Role
 from wtforms.widgets import ListWidget, CheckboxInput
 
 
@@ -23,6 +23,12 @@ class AddImageForm(FlaskForm):
     image_file = FileField("Image File", validators=[InputRequired()])
     submit = SubmitField("Upload Image")
 
+class EditImageForm(FlaskForm):
+    title = StringField("Image Title", validators = [InputRequired()])
+    description = TextAreaField("Image Description", validators = [InputRequired()])
+    price = DecimalField("Image Price", validators = [InputRequired()])
+    currency = SelectField("Currency", choices = [(c.value, c.name) for c in Currency], validators = [InputRequired()])
+    submit = SubmitField('Save Changes')
 
 class AddCategoryForm(FlaskForm):
     """Form for adding a tour."""
@@ -72,12 +78,13 @@ class LoginForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     """Form for user registry."""
-    username = StringField("Username", validators=[InputRequired()])
-    password = PasswordField("Password", validators=[InputRequired()])
-    email = StringField("Email", validators=[InputRequired(), email()])
-    firstname = StringField("Your first name", validators=[InputRequired()])
-    surname = StringField("Your surname", validators=[InputRequired()])
-    phone = StringField("Your phone number", validators=[InputRequired()])
+    username = StringField("Username", validators = [InputRequired()])
+    password = PasswordField("Password", validators = [InputRequired()])
+    email = StringField("Email", validators = [InputRequired(), email()])
+    firstname = StringField("Your first name", validators = [InputRequired()])
+    surname = StringField("Your surname", validators = [InputRequired()])
+    phone = StringField("Your phone number", validators = [InputRequired()])
+    role = RadioField("Role", choices=[(Role.CUSTOMER,Role.CUSTOMER), (Role.VENDOR, Role.VENDOR)], validators=[InputRequired()])
     submit = SubmitField("Make Account")
 
 

@@ -3,7 +3,17 @@ from flask import (
     redirect, url_for, jsonify
 )
 from datetime import datetime
+from flask import send_file, Response
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image
 from hashlib import sha256
+from project.forms import EditImageForm
+from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user
+from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart
+from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
+from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
+from project.models import City, Tour, Currency, Image, Role
+from project.utils import is_allowed_file, generate_uuid, check_user_logged_in
+from werkzeug.utils import secure_filename
 import os
 from werkzeug.utils import secure_filename
 
@@ -58,6 +68,14 @@ def add_cart(imageID):
 @only_vendors
 def vendor():
     addImageForm = AddImageForm()
+    #edit_forms = EditImageForm()
+    
+    #each vendor can view only what they upload in vendor page
+
+    userID = session['user']['userID']
+    vendor_images = get_images_by_vendor(userID)
+    edit_forms = {img.imageID: EditImageForm(obj=img) for img in vendor_images}
+     
     cats = get_categories()
     addImageForm.categories.choices = [
         (c.categoryID, c.categoryName) for c in cats]
@@ -95,16 +113,53 @@ def vendor():
                 # filename = secure_filename(file.filename)
                 save_path = os.path.join(
                     current_app.config['UPLOAD_FOLDER'], imageUpload.imageID + imageUpload.extension)
+                #save_path = os.path.join('project', 'static', 'img', imageUpload.imageID + imageUpload.extension)
                 file.save(save_path)
 
                 add_image(imageUpload)
-
+                #vendor_id = row['vendor_id']
+                #vendor_images = get_images_by_vendor(vendor_id)
                 flash("Image uploaded successfully!")
                 return redirect(url_for('main.vendor'))
+                
             else:
                 flash("Invalid file type! Only png, jpg, jpeg allowed.", 'error')
-    return render_template('vendor.html', addImageForm=addImageForm)
+    return render_template('vendor.html', addImageForm=addImageForm, vendor_images=vendor_images, edit_forms=edit_forms)
 
+#To update image's details in vendor.html page
+
+@bp.route('/vendor/edit_image/<imageID>', methods=['POST'])
+@only_vendors
+def update_image(imageID):
+    userID = session['user']['userID']
+    vendor_images = get_images_by_vendor(userID)
+    edit_forms = {img.imageID: EditImageForm(obj=img) for img in vendor_images}
+     
+    form = edit_forms.get(imageID)
+    if form.validate_on_submit():
+        success = edit_image(
+            imageID,
+            form.title.data,
+            form.description.data,
+            float(form.price.data),
+            form.currency.data
+        )
+        if success:
+            flash("Image updated successfully!", "success")
+        else:
+            flash("Failed to update image.", "error")
+    return redirect(url_for('main.vendor'))
+
+#To delete the existing images via vendor.html page
+@bp.route('/vendor/delete_image/<imageID>', methods=['POST'])
+@only_vendors
+def delete_image(imageID):
+    success = delete_selected_image(imageID)
+    if success:
+        flash("Image deleted successfully!", "success")
+    else:
+        flash("Image not found or failed to delete.", "danger")
+    return redirect(url_for('main.vendor'))
 
 @bp.route('/register/', methods=['POST', 'GET'])
 def register():
@@ -121,7 +176,12 @@ def register():
                 flash('User already exists', 'error')
                 return redirect(url_for('main.register'))
 
-            add_customer(form)
+            # I want to insert user based on role
+            if form.role.data == Role.CUSTOMER:
+                add_customer(form)
+            elif form.role.data == Role.VENDOR:
+                add_vendor(form)
+
             flash('Registration successful!')
             return redirect(url_for('main.login'))
 
