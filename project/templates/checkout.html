@@ -22,8 +22,8 @@
             {% for item in listImage %}
             <tr>
                 <td class="text-start">
-                    <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}"
-                        style="width:60px;height:60px;object-fit:cover;border-radius:8px;margin-right:10px;">
+                    <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" alt="{{ item.name }}"
+                        style="width:600px;height:600px;object-fit:cover;border-radius:8px;margin-right:10px;">
                     {{ item.name }}
                 </td>
                 <td>${{ item.price }}</td>
