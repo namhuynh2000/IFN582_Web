@@ -25,7 +25,7 @@
         </div>
         </details>
         
-        <h3>Your Uploaded Images</h3>
+        <h1>Dashboard</h1>
         <div class="row">
             {% for img in vendor_images %}
                 <div class="col-lg-4 col-md-6 col-sm-12 mb-4 d-flex align-items-stretch">
@@ -33,7 +33,7 @@
                         <img class="card-img-top" src="{{ url_for('static', filename='img/' ~ img.imageID ~ img.extension) }}"  alt="{{ img.title }}">
                     <div class="card-body">
                         <h4 class="card-title">{{ img.title }}</h4>
-                        <p class="card-text">{{ img.description }}</p>
+                        <p class="card-text">Last updated: {{ img.updateDate }}</p>
                     </div>
                     <div class="card-footer">
                         <details class="mb-3 shadow-lg rounded">
@@ -41,24 +41,34 @@
                             <span class="lead">Edit</span>
                         </summary>   
                         <div class="row justify-content-center">
-                        <div class="col-md-6">
-                            <p>
-                                Image's Details 
-                                <br>
-                            </p>
-                            <form method="POST" action="{{ url_for('main.update_image', imageID=img.imageID) }}">
-                                {{ edit_forms[img.imageID].hidden_tag() }}
-                                {{ edit_forms[img.imageID].title(class="form-control") }}
-                                {{ edit_forms[img.imageID].description(class="form-control") }}
-                                {{ edit_forms[img.imageID].price(class="form-control") }}
-                                {{ edit_forms[img.imageID].currency(class="form-select") }}
-                                {{ edit_forms[img.imageID].submit(class="btn btn-primary mt-2") }}
-                            </form>
-                        </div>
-                        <div class="row justify-content-center ">
-                            <form method="POST" action="{{ url_for('main.delete_image', imageID=img.imageID) }}" onsubmit="return confirm('Are you sure you want to delete this image?');">
-                                <button type="submit" class="btn btn-danger mt-2">Delete</button>
-                            </form>
+                        <div class="col-md-11">
+                            <p>Image's Details</p>
+                        <form method="POST" action="{{ url_for('main.update_image', imageID=img.imageID) }}" id="vendorForm">
+                            {{ edit_forms[img.imageID].hidden_tag() }}
+                            {{ edit_forms[img.imageID].title.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].title(class="form-control") }}
+                            {{ edit_forms[img.imageID].description.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].description(class="form-control") }}
+                            {{ edit_forms[img.imageID].price.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].price(class="form-control") }}
+                            {{ edit_forms[img.imageID].currency.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].currency(class="form-select") }}
+                            {{ edit_forms[img.imageID].categories.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].categories() }}
+                            {{ edit_forms[img.imageID].imageStatus.label(class="form-label") }}
+                            {{ edit_forms[img.imageID].imageStatus() }}
+
+                            <div class="row justify-content-center">
+                                <div class="col-auto">
+                                    {{ edit_forms[img.imageID].submit(class="btn btn-primary") }}
+                                </div>
+                                <div class="col-auto">
+                                    <form method="POST" action="{{ url_for('main.delete_image', imageID=img.imageID) }}" onsubmit="return confirm('Are you sure you want to delete this image?');">
+                                        <button type="submit" class="btn btn-danger">Delete Image</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </form>
                         </div>
                     </div> 
                     </details>

@@ -93,6 +93,7 @@ def vendor():
             description = request.form['description']
             price = request.form['price']
             currency = request.form['currency']
+            
 
             if file and is_allowed_file(file.filename):
                 imageUpload = Image(
@@ -153,7 +154,7 @@ def update_image(imageID):
             selected_categories
             
         )
-
+       
         if success:
             flash("Image updated successfully!", "success")
         else:
@@ -209,7 +210,7 @@ def login():
             # form.password.data = sha256(
             #     form.password.data.encode()).hexdigest()
             user = get_user(form.username.data, form.password.data)
-            if not user or user.isDeleted:
+            if not user:
                 flash('Invalid username or password', 'error')
                 return redirect(url_for('main.login'))
             # Store full user info in session

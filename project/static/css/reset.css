@@ -388,3 +388,7 @@ template {
 [hidden] {
   display: none;
 }
+
+#vendorForm {
+    padding: 5px; 
+}
