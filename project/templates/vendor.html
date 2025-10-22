@@ -70,14 +70,17 @@
                                 <div class="col-auto">
                                 {{ edit_forms[img.imageID].submit(class="btn btn-primary") }}
                                 </div>
-                                <div class="col-auto">
-                                <form method="POST" action="{{ url_for('main.delete_image', imageID=img.imageID) }}"
-                                        onsubmit="return confirm('Are you sure you want to delete this image?');">
-                                    <button type="submit" class="btn btn-danger">Delete Image</button>
-                                </form>
-                                </div>
+                                
                             </div>
                             </form>
+                            <div class="row justify-content-center">
+                                <div class="col-auto">
+                                    <form method="POST" action="{{ url_for('main.delete_image', imageID=img.imageID) }}"
+                                            onsubmit="return confirm('Are you sure you want to delete this image?');">
+                                        <button type="submit" class="btn btn-danger">Delete Image</button>
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                         </details>
                     </div>
