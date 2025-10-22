@@ -5,6 +5,8 @@ from flask import (
 from datetime import datetime
 from flask import send_file, Response
 from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendor
+from project.db import (add_image, config_image, edit_image,
+    get_images_by_vendor)
 from hashlib import sha256
 from project.forms import EditImageForm
 from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image
