@@ -248,7 +248,7 @@ def checkout():
         return redirect(url_for('main.login'))
     userID = session['user']['userID']
     listImage = get_image_in_cart(userID)
-    totalPrice = sum(image.price for image in listImage)
+    totalPrice = round(sum(image.price for image in listImage), 2)
     customerInfor = get_customer(session['user']['userID'])
 
     # form = CheckoutForm()
