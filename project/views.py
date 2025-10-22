@@ -4,9 +4,11 @@ from flask import (
 )
 from datetime import datetime
 from flask import send_file, Response
-from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendor
+from project.db import (add_image, add_purchase, config_image, delete_selected_image, edit_image,
+                        get_all_categories, get_images_by_user_purchase, get_images_by_vendor, get_vendor,
+                        remove_all_image_cart)
 from project.db import (add_image, config_image, edit_image,
-    get_images_by_vendor)
+                        get_images_by_vendor)
 from hashlib import sha256
 from project.forms import EditImageForm
 from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image
@@ -47,14 +49,19 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
+    userID = session['user']['userID'] if 'user' in session else None
     images = get_images()
+    boughtImages = []
+    if (userID):
+        boughtImages = get_images_by_user_purchase(userID)
+    boughtIDImages = [img.imageID for img in boughtImages]
     images_with_vendor = [(img, get_vendor(img.userID)) for img in images]
-    
-    newImages = sorted(images, key=lambda x: x.updateDate, reverse=True)
-    newImages_with_vendor = [(img, get_vendor(img.userID)) for img in newImages]
-    
 
-    return render_template('index.html', images=images_with_vendor, newImages= newImages_with_vendor)
+    newImages = sorted(images, key=lambda x: x.updateDate, reverse=True)
+    newImages_with_vendor = [(img, get_vendor(img.userID))
+                             for img in newImages]
+
+    return render_template('index.html', boughtIDImages=boughtIDImages, images=images_with_vendor, newImages=newImages_with_vendor)
 
 
 @bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
@@ -80,11 +87,16 @@ def vendor():
     userID = session['user']['userID']
     vendor_images = get_images_by_vendor(userID)
 
+    cats = get_categories()
+    addImageForm.categories.choices = [
+        (c.categoryID, c.categoryName) for c in cats]
+
     edit_forms = {}
     for img in vendor_images:
         form = EditImageForm(obj=img)
         # Populate all available categories
-        form.categories.choices = get_all_categories()  # returns [(id, name), ...]
+        # returns [(id, name), ...]
+        form.categories.choices = get_all_categories()
         form.imageStatus.data = img.imageStatus
         # Pre-check the assigned categories
         form.categories.data = [c.categoryID for c in img.listCategory]
@@ -102,7 +114,6 @@ def vendor():
             description = request.form['description']
             price = request.form['price']
             currency = request.form['currency']
-            
 
             if file and is_allowed_file(file.filename):
                 imageUpload = Image(
@@ -117,9 +128,11 @@ def vendor():
                     imageStatus='ACTIVE',
                     updateDate=datetime.now(),
                     listRatings=[],
-                    extension=os.path.splitext(secure_filename(file.filename))[1]
+                    extension=os.path.splitext(
+                        secure_filename(file.filename))[1]
                 )
-                save_path = os.path.join(current_app.config['UPLOAD_FOLDER'], imageUpload.imageID + imageUpload.extension)
+                save_path = os.path.join(
+                    current_app.config['UPLOAD_FOLDER'], imageUpload.imageID + imageUpload.extension)
                 file.save(save_path)
 
                 add_image(imageUpload)
@@ -130,14 +143,15 @@ def vendor():
 
     return render_template('vendor.html', addImageForm=addImageForm, vendor_images=vendor_images, edit_forms=edit_forms)
 
-#To update image's details in vendor.html page
+# To update image's details in vendor.html page
+
 
 @bp.route('/vendor/edit_image/<imageID>', methods=['POST'])
 @only_vendors
 def update_image(imageID):
     userID = session['user']['userID']
 
-    #Fetch the image from db
+    # Fetch the image from db
     img = get_image(imageID)
     if not img or img.userID != userID:
         flash("Image not found.", "error")
@@ -145,13 +159,12 @@ def update_image(imageID):
 
     # Initialize the form
     form = EditImageForm(obj=img)
-    form.categories.choices = get_all_categories()  
-    
-    
+    form.categories.choices = get_all_categories()
+
     if form.validate_on_submit():
         # Get selected categories of image
-        selected_categories = form.categories.data  
-        
+        selected_categories = form.categories.data
+
         # Update into image table
         success = edit_image(
             imageID,
@@ -161,9 +174,9 @@ def update_image(imageID):
             form.currency.data,
             form.imageStatus.data,
             selected_categories
-            
+
         )
-       
+
         if success:
             flash("Image updated successfully!", "success")
         else:
@@ -172,6 +185,8 @@ def update_image(imageID):
     return redirect(url_for('main.vendor'))
 
 # Vendor site, to delete the existing images via vendor.html page
+
+
 @bp.route('/vendor/delete_image/<imageID>', methods=['POST'])
 @only_vendors
 def delete_image(imageID):
@@ -181,6 +196,7 @@ def delete_image(imageID):
     else:
         flash("Image not found or failed to delete.", "danger")
     return redirect(url_for('main.vendor'))
+
 
 @bp.route('/register/', methods=['POST', 'GET'])
 def register():
@@ -236,8 +252,6 @@ def login():
             if user.role.value == Role.ADMIN.value:
                 return redirect(url_for('main.manage'))
             return redirect(url_for('main.index'))
-        
-
 
     return render_template('login.html', form=form)
 
@@ -269,14 +283,21 @@ def checkout():
         return redirect(url_for('main.login'))
     userID = session['user']['userID']
     listImage = get_image_in_cart(userID)
-    totalPrice = round(sum(image.price for image in listImage), 2)
+    print("listImage in checkout:", listImage)
+    totalPrice = 0.0
+    if (listImage or len(listImage) > 0):
+        totalPrice = round(sum(image.price for image in listImage), 2)
     customerInfor = get_customer(session['user']['userID'])
+
+    print("listImage:", listImage)
 
     # form = CheckoutForm()
     formPayment = CheckoutFormPayment()
 
     if request.method == 'POST':
         if formPayment.validate_on_submit():
+            remove_all_image_cart(userID)
+            add_purchase(userID, listImage)
             flash('Payment successful!')
             return redirect(url_for('main.checkout'))
         else:
@@ -286,22 +307,6 @@ def checkout():
     formPayment.surname.data = session['user']['surname']
     formPayment.email.data = session['user']['email']
     formPayment.phone.data = session['user']['phone']
-
-    # if form.validate_on_submit():
-    #     form.firstname.data = session['user']['firstname']
-    #     form.surname.data = session['user']['surname']
-    #     form.email.data = session['user']['email']
-    #     form.phone.data = session['user']['phone']
-    #     flash("Payment successful!", "success")
-    #     return redirect(url_for('main.checkout_success'))
-    # if formPayment.validate_on_submit():
-
-    #     card_number = form.cardNumber.data
-    #     expiry = form.expiryDate.data
-    #     cvv = form.CVV.data
-
-    #     flash("Payment successful!", "success")
-    #     return redirect(url_for('main.checkout_success'))
 
     return render_template(
         'checkout.html',
@@ -344,7 +349,6 @@ def handle_manage():
     except Exception as e:
         flash(f'An error occurred: {e}', 'error')
     return redirect(url_for('main.index'))
-
 
 
 # -----------------------------------------------------------TENMPLATE----------------------------------------------------

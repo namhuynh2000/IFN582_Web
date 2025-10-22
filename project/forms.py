@@ -59,17 +59,18 @@ class CheckoutFormPayment(FlaskForm):
     surname = StringField("Your surname", validators = [InputRequired()])
     email = StringField("Your email", validators = [InputRequired()])
     phone = StringField("Your phone number", validators = [InputRequired()])
-    total_price = DecimalField("Price", validators=[InputRequired()])
+    # total_price = DecimalField("Price", validators=[InputRequired()])
     """Payment Information"""
-    cardNumber = StringField("Card Number", validators=[
-        InputRequired(),
-        Regexp(r"^\d{16}$", message="Card number must be 16 digits")
-    ])
-    expiryDate = StringField("Expiry Date (MM/YY)", validators=[InputRequired()])
-    CVV = StringField("CVV", validators=[
-        InputRequired(),
-        Regexp(r"^\d{3}$", message="CVV must be 3 digits")
-    ])
+    paymentMethod = RadioField("Payment Method", choices=[("Credit Card", "Credit Card"), ("Debit Card", "Debit Card")], validators=[InputRequired()])
+    # cardNumber = StringField("Card Number", validators=[
+    #     InputRequired(),
+    #     Regexp(r"^\d{16}$", message="Card number must be 16 digits")
+    # ])
+    # expiryDate = StringField("Expiry Date (MM/YY)", validators=[InputRequired()])
+    # CVV = StringField("CVV", validators=[
+    #     InputRequired(),
+    #     Regexp(r"^\d{3}$", message="CVV must be 3 digits")
+    # ])
     submit = SubmitField("Complete Payment")
 
 

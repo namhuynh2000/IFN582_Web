@@ -100,7 +100,6 @@ CREATE TABLE Image (
 CREATE TABLE Purchase (
   purchaseID   CHAR(36)      NOT NULL,
   userID       CHAR(36)      NOT NULL,               -- FK → Customer
-  currency     ENUM('USD','EUR','AUD') NOT NULL DEFAULT 'USD',
   purchaseDate DATE,
   totalAmount  DECIMAL(12,2) NOT NULL,
   PRIMARY KEY (purchaseID),

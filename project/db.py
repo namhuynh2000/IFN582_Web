@@ -1,5 +1,6 @@
 from __future__ import annotations  # For forward references in type hints
-from project.models import City, Tour, Order, OrderStatus, UserInfo, UserAccount, Image, Rating, Category, Admin, Customer, Vendor, Role, CustomerRank
+from project.models import (Admin, Category, City, Customer, CustomerRank, Image, Order,
+                            OrderStatus, Purchase, Rating, Role, Tour, UserAccount, UserInfo, Vendor)
 from datetime import datetime
 from project.utils import generate_uuid
 from . import mysql
@@ -73,7 +74,7 @@ def get_ratings(userID=None, imageID=None):
 
 
 def get_image_categories(imageID):
-    
+
     cur = mysql.connection.cursor()
     cur.execute("""
         SELECT c.categoryID, c.categoryName, c.description
@@ -88,7 +89,7 @@ def get_image_categories(imageID):
         Category(
             categoryID=row['categoryID'],
             categoryName=row['categoryName'],
-            description=row.get('description', '')  
+            description=row.get('description', '')
         )
         for row in results
     ]
@@ -110,15 +111,20 @@ def get_categories():
     print("listCategory: ", listCategory)
     return listCategory
 
-#Vendor site, to get only categoryID and categoryName for each image
+# Vendor site, to get only categoryID and categoryName for each image
+
+
 def get_all_categories():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT categoryID, categoryName FROM category ORDER BY categoryName ASC")
+    cur.execute(
+        "SELECT categoryID, categoryName FROM category ORDER BY categoryName ASC")
     results = cur.fetchall()
     cur.close()
     return [(str(r['categoryID']), r['categoryName']) for r in results]
 
-#Vendor site, to fetch seleted categories based on each imageID
+# Vendor site, to fetch seleted categories based on each imageID
+
+
 def get_categories_by_image(imageID):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -131,14 +137,16 @@ def get_categories_by_image(imageID):
     rows = cur.fetchall()
     cur.close()
     return [str(row['categoryID']) for row in rows]
-#Vendor site, to update image's categories via vendor management
+# Vendor site, to update image's categories via vendor management
+
+
 def update_image_categories(imageID, categoryIDs):
-    
+
     cur = mysql.connection.cursor()
     try:
         # Delete old category assignments
         cur.execute("DELETE FROM imagecategory WHERE imageID = %s", (imageID,))
-        
+
         # Insert new category assignments
         for cat_id in categoryIDs:
             cur.execute(
@@ -151,21 +159,24 @@ def update_image_categories(imageID, categoryIDs):
         mysql.connection.rollback()
     finally:
         cur.close()
-        
-        
+
+
 def get_images():
     cur = mysql.connection.cursor()
     cur.execute("""
                 SELECT 
                     *
-                FROM image;
+                FROM image WHERE isDeleted = False AND imageStatus = 'ACTIVE';
                 """)
     results = cur.fetchall()
-    print("Results:", results)
-    listImage = [Image(
-        userID=row['userID'], listCategory=get_image_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
-        price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
-        updateDate=datetime.combine(row['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=row['imageID'])) for row in results]
+    listImage = []
+    if results:
+        listImage = [Image(
+            userID=row['userID'], listCategory=get_image_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
+            price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
+            updateDate=datetime.combine(row['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=row['imageID'])) for row in results]
+    else:
+        listImage = []
 
     cur.close()
     return listImage
@@ -176,7 +187,7 @@ def get_image(imageID: str):
     cur.execute("""
                 SELECT 
                     *
-                FROM image WHERE imageID = %s;
+                FROM image WHERE imageID = %s AND isDeleted = False;
                 """, [imageID])
     result = cur.fetchone()
     image = Image(
@@ -204,8 +215,8 @@ def get_images_by_vendor(vendor_id):
 
     images = []
     for row in results:
-        # Fetch categories for each image 
-        categories = get_image_categories(imageID=row['imageID'])  
+        # Fetch categories for each image
+        categories = get_image_categories(imageID=row['imageID'])
         images.append(
             Image(
                 imageID=str(row['imageID']),
@@ -217,26 +228,28 @@ def get_images_by_vendor(vendor_id):
                 imageStatus=row['imageStatus'],
                 updateDate=row['updateDate'],
                 extension=row['extension'],
-                listRatings=[],  
+                listRatings=[],
                 quantity=0,
-                listCategory=categories  
+                listCategory=categories
             )
         )
 
     return images
 
-#Update an existing image's details via vendor management
+# Update an existing image's details via vendor management
+
+
 def edit_image(imageID, title, description, price, currency, imageStatus, category_ids):
     cur = mysql.connection.cursor()
     try:
-        
+
         cur.execute("""
             UPDATE image
             SET title=%s, description=%s, price=%s, currency=%s, imageStatus=%s, updateDate=NOW()
             WHERE imageID=%s
         """, (title, description, price, currency, imageStatus, imageID))
 
-        #To delete and add new category
+        # To delete and add new category
         cur.execute("DELETE FROM imagecategory WHERE imageID=%s", (imageID,))
 
         for cat_id in category_ids:
@@ -253,12 +266,15 @@ def edit_image(imageID, title, description, price, currency, imageStatus, catego
         return False
     finally:
         cur.close()
-        
-#delete image from vendor management but still existing in database (change status to false)
+
+# delete image from vendor management but still existing in database (change status to false)
+
+
 def delete_selected_image(image_id, isDeleted: bool):
     # fetch the image
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM image WHERE imageID = %s", (isDeleted,image_id))
+    cur.execute("SELECT * FROM image WHERE imageID = %s",
+                (isDeleted, image_id))
     image = cur.fetchone()
 
     if not image:
@@ -274,6 +290,8 @@ def delete_selected_image(image_id, isDeleted: bool):
     cur.close()
 
     return True
+
+
 def config_image(imageID: str, isDeleted: bool):
     try:
         cur = mysql.connection.cursor()
@@ -318,7 +336,11 @@ def get_image_in_cart(userID: str):
         WHERE userID = %s;
     """, [userID])
     results = cur.fetchall()
-    listImage = [get_image(row['imageID']) for row in results]
+    listImage = []
+    for row in results:
+        image = get_image(row['imageID'])
+        if image is not None:
+            listImage.append(image)
     cur.close()
     return listImage
 
@@ -402,7 +424,7 @@ def get_user(username, password):
     print("row:", row)
     cur.close()
     if row:
-        
+
         if row['role'] == Role.ADMIN.value:
             return get_admin(row['userID'])
         elif row['role'] == Role.CUSTOMER.value:
@@ -422,6 +444,111 @@ def remove_image_cart(userID: str, imageID: str):
     cur.execute(query, data)
     mysql.connection.commit()
     cur.close()
+
+
+def remove_all_image_cart(userID: str):
+    cur = mysql.connection.cursor()
+    query = """
+        DELETE FROM CartImage
+        WHERE userID = %s
+    """
+    data = (userID,)
+    cur.execute(query, data)
+    mysql.connection.commit()
+    cur.close()
+
+
+def add_purchase(userID: str, listImage: list[Image]):
+    cur = mysql.connection.cursor()
+    totalPrice = round(sum(image.price for image in listImage), 2)
+    purchaseID = generate_uuid()
+    try:
+        queryPurchase = """
+            INSERT INTO Purchase(
+                purchaseID, userID, purchaseDate, totalAmount
+            ) VALUES (%s, %s, %s, %s)
+        """
+        dataPurchase = [
+            purchaseID,
+            userID,
+            datetime.now(),
+            totalPrice
+        ]
+
+        queryPurchaseImage = """
+            INSERT INTO PurchaseImage(
+                purchaseID, imageID) VALUES (%s, %s)
+        """
+        dataPurchaseImage = [(purchaseID, image.imageID)
+                             for image in listImage]
+
+        cur.execute(queryPurchase, dataPurchase)
+        cur.executemany(queryPurchaseImage, dataPurchaseImage)
+
+        mysql.connection.commit()
+    except Exception as e:
+        print("Error adding purchase:", e)
+        mysql.connection.rollback()
+    finally:
+        cur.close()
+
+
+def get_purchases_by_user(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM Purchase
+        WHERE userID = %s
+    """, (userID,))
+    results = cur.fetchall()
+    cur.close()
+
+    purchases = [Purchase(
+        purchaseID=row['purchaseID'],
+        purchaseDate=row['purchaseDate'],
+        totalAmount=float(row['totalAmount']),
+    ) for row in results]
+
+    return purchases
+
+
+def get_images_in_purchase(purchaseID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM image i
+        JOIN PurchaseImage pi ON i.imageID = pi.imageID
+        WHERE pi.purchaseID = %s
+    """, (purchaseID,))
+    results = cur.fetchall()
+    cur.close()
+
+    images = [Image(
+        userID=row['userID'], listCategory=get_image_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
+        price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
+        updateDate=datetime.combine(row['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=row['imageID'])) for row in results]
+
+    return images
+
+
+def get_images_by_user_purchase(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT i.*
+        FROM image i
+        JOIN PurchaseImage pi ON i.imageID = pi.imageID
+        JOIN Purchase p ON pi.purchaseID = p.purchaseID
+        WHERE p.userID = %s
+    """, (userID,))
+    results = cur.fetchall()
+    cur.close()
+
+    images = [Image(
+        userID=row['userID'], listCategory=get_image_categories(imageID=row['imageID']), imageID=row['imageID'], title=row['title'], description=row['description'],
+        price=float(row['price']), quantity=int(row['quantity']), currency=row['currency'], imageStatus=row['imageStatus'], extension=row['extension'],
+        updateDate=datetime.combine(row['updateDate'], datetime.min.time()), listRatings=get_ratings(imageID=row['imageID'])) for row in results]
+
+    return images
 
 
 def get_admin(userID: str):
@@ -483,7 +610,7 @@ def add_customer(form, is_vendor=False):
         cur.execute("""
             INSERT INTO user (userID, username, password, email, firstname, surname, phone, role, isDeleted)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, FALSE)
-        """, (userID,form.username.data,form.password.data,form.email.data,form.firstname.data,form.surname.data,form.phone.data,role_value))
+        """, (userID, form.username.data, form.password.data, form.email.data, form.firstname.data, form.surname.data, form.phone.data, role_value))
 
         # Insert into customer table
         cur.execute("""
@@ -501,10 +628,11 @@ def add_customer(form, is_vendor=False):
         mysql.connection.commit()
         return userID
     except Exception:
-        mysql.connection.rollback() 
+        mysql.connection.rollback()
         raise
     finally:
         cur.close()
+
 
 def add_vendor(form):
     add_customer(form, is_vendor=True)

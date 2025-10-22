@@ -134,7 +134,6 @@ class Purchase:
     purchaseID: str = field(default_factory=lambda: str(uuid4()))
     purchaseDate: datetime = field(default_factory=lambda: datetime.now())
     # listImages: List[Image] = field(default_factory=lambda: [])
-    currency: Currency = Currency.USD
     totalAmount: float = 0.0
 
     # def __post_init__(self):

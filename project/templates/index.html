@@ -63,7 +63,7 @@
 
 {% block main %}
 <!-- marketing information -->
- <!-- Horizontal Rule -->
+<!-- Horizontal Rule -->
 <hr class="border border-primary border-3 mb-3">
 <section>
     <div class="container">
@@ -85,7 +85,36 @@
                         </p>
                         <div class="d-flex justify-content-end">
                             <!-- <button href="#" class="btn btn-dark" style="width: 100%;">Add to Cart</button> -->
-                            <button onclick="addCart('{{ img[0].imageID }}')" style="width: 100%;" class="btn btn-dark">Add to cart</button>
+                            {% if img[0].imageID in boughtIDImages %}
+                            <button style="width: 100%;" class="btn btn-secondary"
+                                title="You have already bought this image">Download</button>
+                            {% else %}
+                            <button style="width: 100%;" class="btn btn-dark" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal_{{img[0].imageID}}">Add to cart</button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal_{{img[0].imageID}}" tabindex="-1" aria-labelledby="exampleModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Warning</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Do you want to add this item to your cart?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button data-bs-dismiss="modal" type="button"
+                                                onclick="addCart('{{ img[0].imageID }}')"
+                                                class="btn btn-primary">Yes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -114,8 +143,36 @@
                         <p class="card-text"><i class="bi bi-camera-fill"></i> {{img[1].firstname}} {{img[1].surname}}
                         </p>
                         <div class="d-flex justify-content-end">
-                            <!-- <button href="#" class="btn btn-dark" style="width: 100%;">Add to Cart</button> -->
-                            <button onclick="addCart('{{ img[0].imageID }}')" style="width: 100%;" class="btn btn-dark">Add to cart</button>
+                            {% if img[0].imageID in boughtIDImages %}
+                            <button style="width: 100%;" class="btn btn-secondary"
+                                title="You have already bought this image">Download</button>
+                            {% else %}
+                            <button style="width: 100%;" class="btn btn-dark" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal_{{img[0].imageID}}">Add to cart</button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal_{{img[0].imageID}}" tabindex="-1" aria-labelledby="exampleModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Warning</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Do you want to add this item to your cart?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button data-bs-dismiss="modal" type="button"
+                                                onclick="addCart('{{ img[0].imageID }}')"
+                                                class="btn btn-primary">Yes</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
@@ -125,36 +182,6 @@
     </div>
 </section>
 
-
-
-<!-- display the cities to the user -->
-<!-- <section class="shadow-sm p-5" id="cities">
-    <div class="text-dark text-center">
-        <div>
-            <p class="h3 text-dark mb-4" id="cities_anchor">Pick a city to see what we have to offer!</p>
-        </div>
-    </div>
-    <div class="row ps-2 pe-2">
-        {% for image in images %}
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <img class="card-img-top"
-                    src="{{ url_for('static', filename='img/' + image[0].imageID + image[0].extension) }}"
-                    alt="Card image">
-                <div class="card-body">
-                    <a class="card-title" href="{{url_for('main.item_detail', imageID = image[0].imageID)}}">{{
-                        image.title
-                        }}</h4>
-                        <p class="card-text">{{ image.description }}</p>
-                </div>
-                <div class="card-footer">
-                    <button onclick="addCart('{{ image[0].imageID }}')" class="btn btn-primary">Add to cart</button>
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-</section> -->
 {% endblock %}
 
 {% block scripts %}

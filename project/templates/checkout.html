@@ -4,70 +4,118 @@
 
 {% block main %}
 <div class="container mt-5">
-    <h1 class="text-center mb-5">Checkout</h1>
+    <h1 class="text-center mb-2">Checkout</h1>
 
     {% if listImage|length == 0 %}
     <div class="alert alert-info text-center">Your basket is empty.</div>
     {% else %}
-    <table class="table table-striped align-middle text-center">
-        <thead class="table-dark">
-            <tr>
-                <th>Item</th>
-                <th>Unit Price</th>
-                <th>Subtotal</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in listImage %}
-            <tr>
-
-                <td class="text-center">
-                    <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}"
-                        alt="{{ item.name }}" style="width:70%; height:20vh; object-fit:cover; border-radius:8px">
-
-                    {{ item.name }}
-                </td>
-                <td>${{ item.price }}</td>
-                <td>${{ item.price }}</td>
-                <td>
-                    <form action="{{ url_for('main.remove_cart_item', imageID = item.imageID) }}" method="POST">
-                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
     <div class="text-end fs-4 fw-bold mb-3">Total Price: ${{ "%.2f"|format(totalPrice) }}</div>
-    <h2 class="text-center mb-4">Payment Information</h2>
-    {{ wtf.render_form(formPayment) }}
 
-    <!-- <form>
-        <div class="mb-3">
-            <input class="form-control" type="text" placeholder="Full Name" required>
-        </div>
-        <div class="mb-3">
-            <input class="form-control" type="email" placeholder="Email Address" required>
-        </div>
-        <div class="mb-3">
-            <textarea class="form-control" placeholder="Shipping Address" required></textarea>
-        </div>
+    <div style="max-height: 75vh; overflow-y: auto; overflow-x: hidden; border-radius: 0.5rem;">
+        <table class="table table-striped align-middle text-center table-responsive">
+            <thead class="table-dark sticky-top">
+                <tr>
+                    <th>Image</th>
+                    <th>Title</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in listImage %}
+                <tr>
 
-        <div class="mb-3">
-            <label class="form-label">Delivery Method</label>
-            <select class="form-select">
-                <option>Standard Delivery</option>
-                <option>Express Delivery</option>
-                <option>Store Pickup</option>
-            </select>
-        </div>
+                    <td class="text-center">
+                        <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}"
+                            alt="{{ item.name }}" style="width:70%; height:20vh; object-fit:cover; border-radius:8px">
+                    </td>
+                    <td>{{ item.title }}</td>
+                    <td>${{ item.price }} {{item.currency}}</td>
+                    <td>
+                        <form action="{{ url_for('main.remove_cart_item', imageID = item.imageID) }}" method="POST">
+                            <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal"
+                                data-bs-target="#exampleModal_{{item.imageID}}">Remove</button>
+                            <!-- Modal -->
+                            <div class="modal fade" id="exampleModal_{{item.imageID}}" tabindex="-1"
+                                aria-labelledby="exampleModalLabel" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="exampleModalLabel">Remove confirmation</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Do you want to remove this item from your cart?
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary"
+                                                data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" class="btn btn-primary">Confirm</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-        <div class="text-center">
-            <button class="btn btn-success btn-lg">Complete Purchase</button>
+
+    <details class="mb-3 shadow-lg rounded mt-4">
+        <summary class="text-bg-dark ps-2 rounded text-center">
+            <span class="lead"><i class="bi bi-credit-card-fill"></i> Payment Details</span>
+        </summary>
+        <h2 class="text-center m-4">Payment Information</h2>
+        <div class=" row justify-content-center p-3">
+            <div class="col-md-6" id="form-wrapper">
+                {{ wtf.render_form(formPayment) }}
+            </div>
+            <!-- Bootstrap Modal -->
+            <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="confirmLabel">Payment confirmation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+                        </div>
+                        <div class="modal-body">
+                            Are you sure you want to proceed with the payment?
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="button" class="btn btn-primary" id="confirmSubmit">Confirm</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </form> -->
+    </details>
     {% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("#form-wrapper form");
+        const confirmModal = new bootstrap.Modal(document.getElementById("confirmModal"));
+        const confirmButton = document.getElementById("confirmSubmit");
+
+        form.addEventListener("submit", function (e) {
+            e.preventDefault(); 
+            confirmModal.show(); 
+        });
+
+        confirmButton.addEventListener("click", function () {
+            console.log("Payment confirmed.");
+            confirmModal.hide();
+            form.submit(); 
+        });
+    });
+</script>
 {% endblock %}

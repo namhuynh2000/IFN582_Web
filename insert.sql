@@ -86,10 +86,10 @@ INSERT INTO ImageCategory (categoryID, imageID) VALUES
 -- PURCHASES (+ items) – both customers and vendors can buy (both are in Customer)
 SET @pur1 = UUID(), @pur2 = UUID(), @pur3 = UUID();
 
-INSERT INTO Purchase (purchaseID, userID, currency, purchaseDate, totalAmount) VALUES
-(@pur1, @cust1,   'USD', '2025-10-05', (19.99 + 15.99)),
-(@pur2, @cust2,   'USD', '2025-10-06', (9.99 + 8.50 + 10.25)),
-(@pur3, @vendor1, 'USD', '2025-10-07', (14.50 + 21.99));  -- vendor buying too
+INSERT INTO Purchase (purchaseID, userID, purchaseDate, totalAmount) VALUES
+(@pur1, @cust1,    '2025-10-05', (19.99 + 15.99)),
+(@pur2, @cust2,    '2025-10-06', (9.99 + 8.50 + 10.25)),
+(@pur3, @vendor1,  '2025-10-07', (14.50 + 21.99));  -- vendor buying too
 
 INSERT INTO PurchaseImage (purchaseID, imageID) VALUES
 (@pur1, @img1), (@pur1, @img6),
