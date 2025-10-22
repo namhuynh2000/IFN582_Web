@@ -4,7 +4,7 @@
 
 {% block main %}
 <div class="container mt-5">
-    <h1 class="text-center mb-4">Checkout</h1>
+    <h1 class="text-center mb-5">Checkout</h1>
 
     {% if listImage|length == 0 %}
     <div class="alert alert-info text-center">Your basket is empty.</div>
@@ -21,9 +21,11 @@
         <tbody>
             {% for item in listImage %}
             <tr>
-                <td class="text-start">
-                    <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" alt="{{ item.name }}"
-                        style="width:600px;height:600px;object-fit:cover;border-radius:8px;margin-right:10px;">
+
+                <td class="text-center">
+                    <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}"
+                        alt="{{ item.name }}" style="width:70%; height:20vh; object-fit:cover; border-radius:8px">
+
                     {{ item.name }}
                 </td>
                 <td>${{ item.price }}</td>
@@ -39,9 +41,9 @@
     </table>
 
     <div class="text-end fs-4 fw-bold mb-3">Total Price: ${{ "%.2f"|format(totalPrice) }}</div>
-      <h2 class="text-center mb-4">Payment Information</h2>
-     {{ wtf.render_form(formPayment) }}
-     
+    <h2 class="text-center mb-4">Payment Information</h2>
+    {{ wtf.render_form(formPayment) }}
+
     <!-- <form>
         <div class="mb-3">
             <input class="form-control" type="text" placeholder="Full Name" required>

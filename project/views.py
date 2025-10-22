@@ -5,6 +5,9 @@ from flask import (
 from datetime import datetime
 from flask import send_file, Response
 from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendorName
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendor
+from project.db import (add_image, config_image, edit_image,
+    get_images_by_vendor)
 from hashlib import sha256
 from project.forms import EditImageForm
 from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image, get_active_image
@@ -45,7 +48,14 @@ bp = Blueprint('main', __name__)
 
 @bp.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html', images=get_images())
+    images = get_images()
+    images_with_vendor = [(img, get_vendor(img.userID)) for img in images]
+    
+    newImages = sorted(images, key=lambda x: x.updateDate, reverse=True)
+    newImages_with_vendor = [(img, get_vendor(img.userID)) for img in newImages]
+    
+
+    return render_template('index.html', images=images_with_vendor, newImages= newImages_with_vendor)
 
 # To get vendor name for each image in item details page
 @bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
@@ -349,6 +359,7 @@ def handle_manage():
     except Exception as e:
         flash(f'An error occurred: {e}', 'error')
     return redirect(url_for('main.index'))
+
 
 
 # -----------------------------------------------------------TENMPLATE----------------------------------------------------
