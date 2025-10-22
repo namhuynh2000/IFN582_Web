@@ -95,7 +95,9 @@ def get_image_categories(imageID):
 
     return listCategory
 
-#This is for list all images
+# This is for list all images
+
+
 def get_categories():
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -168,6 +170,7 @@ def get_images():
     cur.close()
     return listImage
 
+
 def get_image(imageID: str):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -184,7 +187,9 @@ def get_image(imageID: str):
 
     cur.close()
     return image
-#To display all images in vendor management
+# To display all images in vendor management
+
+
 def get_images_by_vendor(vendor_id):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -270,24 +275,39 @@ def delete_selected_image(image_id, isDeleted: bool):
 
     return True
 def config_image(imageID: str, isDeleted: bool):
-    cur = mysql.connection.cursor()
-    cur.execute("""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
         UPDATE image
         SET isDeleted = %s
         WHERE imageID = %s
     """, [isDeleted, imageID])
-    mysql.connection.commit()
-    cur.close()
-    
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error updating image:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
+
+
 def config_user(userID: str, isDeleted: bool):
-    cur = mysql.connection.cursor()
-    cur.execute("""
+    try:
+        cur = mysql.connection.cursor()
+        cur.execute("""
         UPDATE user
         SET isDeleted = %s
         WHERE userID = %s
     """, [isDeleted, userID])
-    mysql.connection.commit()
-    cur.close()
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error updating image:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
 
 
 def get_image_in_cart(userID: str):
@@ -302,7 +322,9 @@ def get_image_in_cart(userID: str):
     cur.close()
     return listImage
 
-#add new image in vendor management
+# add new image in vendor management
+
+
 def add_image(image: Image):
     cur = mysql.connection.cursor()
     queryAddImage = """
@@ -330,16 +352,17 @@ def add_image(image: Image):
         image.quantity,
         image.extension
     )
-    
+
     dataImageCategory = [(
         category,
         image.imageID
     ) for category in image.listCategory]
-    
+
     cur.execute(queryAddImage, dataImage)
     cur.executemany(queryAddImageCategory, dataImageCategory)
     mysql.connection.commit()
     cur.close()
+
 
 def add_category(category: Category):
     cur = mysql.connection.cursor()
@@ -350,6 +373,7 @@ def add_category(category: Category):
     cur.execute(query, data)
     mysql.connection.commit()
     cur.close()
+
 
 def add_to_cart(userID: str, imageID: str):
     cur = mysql.connection.cursor()
@@ -387,6 +411,7 @@ def get_user(username, password):
             return get_vendor(row['userID'])
     return None
 
+
 def remove_image_cart(userID: str, imageID: str):
     cur = mysql.connection.cursor()
     query = """
@@ -412,6 +437,7 @@ def get_admin(userID: str):
     if row:
         return Admin(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'])
     return None
+
 
 def get_customer(userID: str):
     cur = mysql.connection.cursor()
@@ -439,45 +465,52 @@ def get_vendor(userID: str):
         WHERE u.userID = %s
     """, (userID,))
     row = cur.fetchone()
+    print("row vendor", row)
     cur.close()
     if row:
         return Vendor(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'], bio=row['bio'], portfolio=row['portfolio'])
     return None
 
+
 def add_customer(form, is_vendor=False):
     cur = mysql.connection.cursor()
     userID = generate_uuid()
+    try:
+        # if user is not vendor, then become only customer
+        role_value = Role.VENDOR.value if is_vendor else Role.CUSTOMER.value
 
-    # if user is not vendor, then become only customer
-    role_value = Role.VENDOR.value if is_vendor else Role.CUSTOMER.value
-
-    # Insert into user table with isDeleted default FALSE
-    cur.execute("""
-        INSERT INTO user (userID, username, password, email, firstname, surname, phone, role, isDeleted)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, FALSE)
-    """, (userID,form.username.data,form.password.data,form.email.data,form.firstname.data,form.surname.data,form.phone.data,role_value))
-
-    # Insert into customer table
-    cur.execute("""
-        INSERT INTO customer (userID, customerRank)
-        VALUES (%s, %s)
-    """, (userID, CustomerRank.BRONZE.value))
-
-    # If vendor, insert into vendor table
-    if is_vendor:
+        # Insert into user table with isDeleted default FALSE
         cur.execute("""
-            INSERT INTO vendor (userID, bio, portfolio)
-            VALUES (%s, %s, %s)
-        """, (userID, '', ''))
+            INSERT INTO user (userID, username, password, email, firstname, surname, phone, role, isDeleted)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, FALSE)
+        """, (userID,form.username.data,form.password.data,form.email.data,form.firstname.data,form.surname.data,form.phone.data,role_value))
 
-    mysql.connection.commit()
-    cur.close()
+        # Insert into customer table
+        cur.execute("""
+            INSERT INTO customer (userID, customerRank)
+            VALUES (%s, %s)
+        """, (userID, CustomerRank.BRONZE.value))
+
+        # If vendor, insert into vendor table
+        if is_vendor:
+            cur.execute("""
+                INSERT INTO vendor (userID, bio, portfolio)
+                VALUES (%s, %s, %s)
+            """, (userID, '', ''))
+
+        mysql.connection.commit()
+        return userID
+    except Exception:
+        mysql.connection.rollback() 
+        raise
+    finally:
+        cur.close()
 
 def add_vendor(form):
     add_customer(form, is_vendor=True)
 
 
-#temp debug
+# temp debug
 def change_role(userID: str, new_role: Role):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -485,20 +518,20 @@ def change_role(userID: str, new_role: Role):
         SET role = %s
         WHERE userID = %s
     """, (new_role.value, userID))
-    if(new_role == Role.ADMIN):
+    if (new_role == Role.ADMIN):
         cur.execute("""
             INSERT INTO admin (userID)
             VALUES (%s)
         """, (userID,))
-    elif(new_role == Role.VENDOR):
+    elif (new_role == Role.VENDOR):
         cur.execute("""
             INSERT INTO vendor (userID, bio, portfolio)
             VALUES (%s, %s, %s)
         """, (userID, '', ''))
     mysql.connection.commit()
-    cur.close()    
+    cur.close()
 
-    
+
 def check_user(username: str):
     cur = mysql.connection.cursor()
     cur.execute("""

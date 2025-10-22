@@ -4,7 +4,7 @@ from flask import (
 )
 from datetime import datetime
 from flask import send_file, Response
-from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image
 from hashlib import sha256
 from project.forms import EditImageForm
 from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image
@@ -166,7 +166,7 @@ def update_image(imageID):
 @bp.route('/vendor/delete_image/<imageID>', methods=['POST'])
 @only_vendors
 def delete_image(imageID):
-    success = delete_selected_image(imageID)
+    success = config_image(imageID, True)
     if success:
         flash("Image deleted successfully!", "success")
     else:
@@ -188,10 +188,10 @@ def register():
                 flash('User already exists', 'error')
                 return redirect(url_for('main.register'))
 
-            # To insert user based on role
-            if form.role.data == Role.CUSTOMER:
+            # I want to insert user based on role
+            if form.role.data == Role.CUSTOMER.value:
                 add_customer(form)
-            elif form.role.data == Role.VENDOR:
+            elif form.role.data == Role.VENDOR.value:
                 add_vendor(form)
 
             flash('Registration successful!')
@@ -260,7 +260,7 @@ def checkout():
         return redirect(url_for('main.login'))
     userID = session['user']['userID']
     listImage = get_image_in_cart(userID)
-    totalPrice = sum(image.price for image in listImage)
+    totalPrice = round(sum(image.price for image in listImage), 2)
     customerInfor = get_customer(session['user']['userID'])
 
     # form = CheckoutForm()
