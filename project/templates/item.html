@@ -1,58 +1,48 @@
 {% extends 'base.html' %}
-
-{% block head %}
-<!-- add a big banner to welcome user -->
-<div class="p-6 text-white bg-image" 
-    style="background-image: url({{url_for('static', filename='img/header.jpg')}}); background-size: cover;">
-    <div class="text-white text-center py-5 px-4">
-        <div>
-            <h2 class="display-2"> Explore for {{ item.title }}</h2>
-        </div>
-    </div>
-</div>
-{% endblock %}
-
 {% block main %}
-<!-- display tours for the specific city -->
-<section class="shadow-sm mb-3">
-
-    <div class="text-dark text-center">
-        <div>
-            <p class="h2 text-dark mb-4">Do you like this item? Please add them to the basket</p>
+<!-- display image details -->
+    <div class="container mt-5">
+        <div class="row">
+            <nav class="mt-5" aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item">Home</li>
+                    <li class="breadcrumb-item active" aria-current="page">Detail</li>
+                </ol>
+            </nav>
         </div>
-    </div>
+        <div class="row">
+            <div class="card p-0 mb-3">
+                <div class="row g-0">
+                    <div class="col-md-6">
+                        <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" 
+                    alt="Card image" class="img-fluid rounded-start"
+                            style="height: 100%; object-fit: cover; object-position: center;">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card-body p-5 d-flex flex-column justify-content-between h-100">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <h4 class="card-title mb-0">{{ item.title }}</h4>
+                                <p class="card-title mb-0"><small class="text-body-secondary">Last updated: {{ item.updateDate.strftime('%Y-%m-%d') }}</small>
+                                </p>
+                            </div>
+                            <br>
+                            <p class="card-text">by {{ username }}</p>
+                            <p class="card-text">{{ item.description }}</p>
+                            <br />
+                            <div class="d-flex">
+                                <label class="bg-warning rounded-pill py-2 px-3 d-flex flex-row" style="display: block;"
+                                    for="">{{ item.currency }} ${{ item.price }}</label>
 
-<br>
+                            </div>
+                            <div class="mt-3 d-flex justify-content-center justify-content-md-end gap-3">
+                                <a class="btn btn-primary" method="POST" 
+                        action="{{ url_for('main.checkout') }}">Add to Basket</a>
+                                <!-- <button class="btn btn-success">Free download</button> -->
 
-    <div class="row justify-content-center">
-        <!-- each tour is a bootstrap card -->
-        
-        <div class="col-md-4 mb-4">
-            <div class="card h-100">
-                <img class="card-img-top" 
-                    src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" 
-                    alt="Card image">
-                <div class="card-body">
-                    <h3 class="card-title text-dark">{{ item.title }}</h3>
-                    <p class="card-text">{{ item.description }}</p>
-                    <p class="card-text float-end text-end"> 
-                        Quantity: <u>{{ item.quantity }}</u>
-                        <br>
-                        Price: <u>{{ item.currency }} ${{ item.price }}</u>
-                    </p>
-                </div>
-                <div class="card-footer">
-                    <form method="POST" 
-                        action="{{ url_for('main.checkout') }}">
-                        <input 
-                            type="submit" 
-                            value="Add to Basket" 
-                            class="btn btn-primary">
-                    </form> 
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-
-    </div>
-</section>
 {% endblock %}

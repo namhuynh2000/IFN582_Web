@@ -7,11 +7,13 @@ from flask import send_file, Response
 from project.db import (add_image, add_purchase, config_image, delete_selected_image, edit_image,
                         get_all_categories, get_images_by_user_purchase, get_images_by_vendor, get_vendor,
                         remove_all_image_cart)
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendorName
+from project.db import get_images_by_vendor, add_image, edit_image, delete_selected_image,get_all_categories, config_image, get_vendor
 from project.db import (add_image, config_image, edit_image,
                         get_images_by_vendor)
 from hashlib import sha256
 from project.forms import EditImageForm
-from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image
+from project.db import add_order, get_orders, add_customer, add_vendor, is_admin, get_images, get_ratings, get_user, check_user, get_categories_by_image, get_active_image
 from project.db import get_cities, get_city, get_tours_for_city, add_city, add_tour, add_image, add_to_cart, get_image_in_cart, update_image_categories
 from project.session import get_basket, add_to_basket, empty_basket, remove_from_basket, convert_basket_to_order
 from project.forms import CheckoutForm, LoginForm, RegisterForm, AddTourForm, AddCityForm, AddImageForm
@@ -63,11 +65,12 @@ def index():
 
     return render_template('index.html', boughtIDImages=boughtIDImages, images=images_with_vendor, newImages=newImages_with_vendor)
 
-
+# To get vendor name for each image in item details page
 @bp.route('/item/<string:imageID>', methods=['GET', 'POST'])
 def item_detail(imageID):
     item = get_image(imageID)
-    return render_template('item.html', item=item)
+    username = get_vendorName(item.userID)
+    return render_template('item.html', item=item, username=username)
 
 
 @bp.route('/cart/<string:imageID>', methods=['GET', 'POST'])
@@ -85,6 +88,7 @@ def add_cart(imageID):
 def vendor():
     addImageForm = AddImageForm()
     userID = session['user']['userID']
+    addImageForm.categories.choices = get_all_categories()
     vendor_images = get_images_by_vendor(userID)
 
     cats = get_categories()
@@ -158,13 +162,15 @@ def update_image(imageID):
         return redirect(url_for('main.vendor'))
 
     # Initialize the form
-    form = EditImageForm(obj=img)
-    form.categories.choices = get_all_categories()
-
+    form = EditImageForm(request.form,obj=img)
+    form.categories.choices = get_all_categories()  
+    
+    
     if form.validate_on_submit():
         # Get selected categories of image
-        selected_categories = form.categories.data
-
+        
+        selected_categories = form.categories.data  
+        
         # Update into image table
         success = edit_image(
             imageID,
@@ -178,9 +184,13 @@ def update_image(imageID):
         )
 
         if success:
-            flash("Image updated successfully!", "success")
+            flash("Image updated successfully!")
         else:
             flash("Failed to update image.", "error")
+        return redirect(url_for('main.vendor'))
+    
+    else:
+        flash("Form validation failed. Please check the inputs.", "error")
 
     return redirect(url_for('main.vendor'))
 
@@ -196,6 +206,13 @@ def delete_image(imageID):
     else:
         flash("Image not found or failed to delete.", "danger")
     return redirect(url_for('main.vendor'))
+
+# To display all active images in the system on gallery page
+@bp.route('/gallery')
+def gallery():
+    # Fetch only ACTIVE images
+    images = get_active_image()
+    return render_template('gallery.html', images=images)
 
 
 @bp.route('/register/', methods=['POST', 'GET'])

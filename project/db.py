@@ -198,9 +198,49 @@ def get_image(imageID: str):
 
     cur.close()
     return image
+
+def get_active_image():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+            SELECT *
+            FROM image
+            WHERE image.imageStatus = 'ACTIVE'
+            ORDER BY image.updateDate DESC;
+        """)
+    result = cur.fetchall()
+    cur.close()
+
+    active_images = []
+    for row in result:
+        image = Image(
+            userID=row['userID'],
+            listCategory=get_image_categories(imageID=row['imageID']),
+            imageID=row['imageID'],
+            title=row['title'],
+            description=row['description'],
+            price=float(row['price']),
+            quantity=int(row['quantity']),
+            currency=row['currency'],
+            imageStatus=row['imageStatus'],
+            extension=row['extension'],
+            updateDate=datetime.combine(row['updateDate'], datetime.min.time()),
+            listRatings=get_ratings(imageID=row['imageID'])
+        )
+        active_images.append(image)
+
+    return active_images
+
+#Display vendor name in item detail page
+def get_vendorName(userID):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT username FROM user WHERE userID = %s", (userID,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return row['username']
+    return None
+
 # To display all images in vendor management
-
-
 def get_images_by_vendor(vendor_id):
     cur = mysql.connection.cursor()
     cur.execute("""
