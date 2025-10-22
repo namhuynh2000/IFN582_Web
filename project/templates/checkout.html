@@ -38,7 +38,7 @@
         </tbody>
     </table>
 
-    <div class="text-end fs-4 fw-bold mb-3">Total: ${{ totalPrice }}</div>
+    <div class="text-end fs-4 fw-bold mb-3">Total Price: ${{ "%.2f"|format(totalPrice) }}</div>
       <h2 class="text-center mb-4">Payment Information</h2>
      {{ wtf.render_form(formPayment) }}
      

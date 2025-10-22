@@ -45,12 +45,15 @@ class CheckoutForm(FlaskForm):
     email = StringField("Your email", validators=[InputRequired()])
     phone = StringField("Your phone number", validators=[InputRequired()])
     submit = SubmitField("Send to Agent")
+   
+   
 class CheckoutFormPayment(FlaskForm):
     """Form for user checkout."""
     firstname = StringField("Your first name", validators = [InputRequired()])
     surname = StringField("Your surname", validators = [InputRequired()])
     email = StringField("Your email", validators = [InputRequired()])
     phone = StringField("Your phone number", validators = [InputRequired()])
+    total_price = DecimalField("Price", validators=[InputRequired()])
     """Payment Information"""
     cardNumber = StringField("Card Number", validators=[
         InputRequired(),
@@ -74,7 +77,6 @@ class LoginForm(FlaskForm):
     username = StringField("Username", validators=[InputRequired()])
     password = PasswordField("Password", validators=[InputRequired()])
     submit = SubmitField("Login")
-
 
 class RegisterForm(FlaskForm):
     """Form for user registry."""
