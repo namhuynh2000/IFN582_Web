@@ -28,3 +28,5 @@ Start the app:
 ```bash
 py run.py
 ```
+
+### 💡 Alternative method: Use this link https://github.com/namhuynh2000/IFN582_Web
