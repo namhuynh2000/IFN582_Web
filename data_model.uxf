@@ -1,9 +1,9 @@
-<diagram program="umletino" version="15.1"><zoom_level>9</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>0</x><y>567</y><w>234</w><h>99</h></coordinates><panel_attributes>Customer
+<diagram program="umletino" version="15.1"><zoom_level>9</zoom_level><help_text>Space for diagram notes</help_text><element><id>UMLClass</id><coordinates><x>90</x><y>567</y><w>234</w><h>99</h></coordinates><panel_attributes>Customer
 --
 -userID: Char(36) (PK, FK -&gt; User)
 -customerRank: CustomerRank
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>684</x><y>459</y><w>207</w><h>171</h></coordinates><panel_attributes>Image
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>774</x><y>459</y><w>207</w><h>180</h></coordinates><panel_attributes>Image
 --
 -imageID: Char(36) (PK)
 -userID: Char(36) (FK -&gt; Vendor)
@@ -15,15 +15,16 @@
 -imageStatus: ImageStatus
 -quantity: Integer
 -extension: Varchar(10) not null
+-isDeleted: Boolean
 
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1053</x><y>486</y><w>189</w><h>81</h></coordinates><panel_attributes>Category
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1143</x><y>486</y><w>189</w><h>81</h></coordinates><panel_attributes>Category
 --
 -categoryID: Char(36) (PK)
 -categoryName: Varchar(50)
 -description: Text
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>306</x><y>297</y><w>189</w><h>108</h></coordinates><panel_attributes>Purchase
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>396</x><y>297</y><w>189</w><h>108</h></coordinates><panel_attributes>Purchase
 --
 -purchaseID: Char(36) (PK)
 -userID: Char(36) (FK -&gt; Customer)
@@ -31,7 +32,7 @@
 -purchaseDate: Date
 -totalAmount: Decimal(12,2)
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>297</x><y>747</y><w>216</w><h>117</h></coordinates><panel_attributes>Rating
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>387</x><y>747</y><w>216</w><h>117</h></coordinates><panel_attributes>Rating
 --
 -ratingID: Char(36) (PK)
 -userID: Char(36) (FK -&gt; Customer)
@@ -40,37 +41,37 @@
 -comment: Text
 -updateDate: Date
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>117</x><y>162</y><w>180</w><h>423</h></coordinates><panel_attributes>lt=&lt;&lt;-
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>207</x><y>162</y><w>180</w><h>423</h></coordinates><panel_attributes>lt=&lt;&lt;-
 m1=1
-m2=1</panel_attributes><additional_attributes>180;10;10;10;10;450</additional_attributes></element><element><id>Relation</id><coordinates><x>153</x><y>351</y><w>171</w><h>234</h></coordinates><panel_attributes>lt=-
+m2=1</panel_attributes><additional_attributes>180;10;10;10;10;450</additional_attributes></element><element><id>Relation</id><coordinates><x>243</x><y>351</y><w>171</w><h>234</h></coordinates><panel_attributes>lt=-
 m1=1
 m2=0..*
-has &gt;</panel_attributes><additional_attributes>10;240;10;10;170;10</additional_attributes></element><element><id>Relation</id><coordinates><x>882</x><y>504</y><w>189</w><h>45</h></coordinates><panel_attributes>lt=-
+has &gt;</panel_attributes><additional_attributes>10;240;10;10;170;10</additional_attributes></element><element><id>Relation</id><coordinates><x>972</x><y>504</y><w>189</w><h>45</h></coordinates><panel_attributes>lt=-
 m1=0..*
 m2=1..*
-classified as &gt;</panel_attributes><additional_attributes>10;20;190;20</additional_attributes></element><element><id>Relation</id><coordinates><x>504</x><y>621</y><w>261</w><h>234</h></coordinates><panel_attributes>lt=-&gt;&gt;&gt;&gt;&gt;
+classified as &gt;</panel_attributes><additional_attributes>10;20;190;20</additional_attributes></element><element><id>Relation</id><coordinates><x>594</x><y>630</y><w>261</w><h>225</h></coordinates><panel_attributes>lt=-&gt;&gt;&gt;&gt;&gt;
 m1=0..*
 m2=1
-&lt; receive </panel_attributes><additional_attributes>10;230;260;230;260;10</additional_attributes></element><element><id>Relation</id><coordinates><x>486</x><y>351</y><w>270</w><h>126</h></coordinates><panel_attributes>lt=-
+&lt; receive </panel_attributes><additional_attributes>10;220;260;220;260;10</additional_attributes></element><element><id>Relation</id><coordinates><x>576</x><y>351</y><w>270</w><h>126</h></coordinates><panel_attributes>lt=-
 m1=1..*
 m2=0..*
-contains &gt;</panel_attributes><additional_attributes>260;120;260;20;10;20</additional_attributes></element><element><id>Relation</id><coordinates><x>54</x><y>657</y><w>261</w><h>198</h></coordinates><panel_attributes>lt=-
+contains &gt;</panel_attributes><additional_attributes>260;120;260;20;10;20</additional_attributes></element><element><id>Relation</id><coordinates><x>144</x><y>657</y><w>261</w><h>198</h></coordinates><panel_attributes>lt=-
 m1=1
 m2=0..*
-writes &gt;</panel_attributes><additional_attributes>10;10;10;190;270;190</additional_attributes></element><element><id>Relation</id><coordinates><x>225</x><y>585</y><w>477</w><h>45</h></coordinates><panel_attributes>lt=-
+writes &gt;</panel_attributes><additional_attributes>10;10;10;190;270;190</additional_attributes></element><element><id>Relation</id><coordinates><x>315</x><y>585</y><w>477</w><h>45</h></coordinates><panel_attributes>lt=-
 m1=0..*
 m2=0..*
-selects &gt;</panel_attributes><additional_attributes>510;20;10;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>765</x><y>675</y><w>171</w><h>72</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
+selects &gt;</panel_attributes><additional_attributes>510;20;10;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>855</x><y>675</y><w>171</w><h>72</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
 ImageStatus
 --
     ACTIVE = 'Active'
-    DRAFT = 'Draft'       </panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>819</x><y>621</y><w>27</w><h>72</h></coordinates><panel_attributes></panel_attributes><additional_attributes>10;10;10;60</additional_attributes></element><element><id>UMLClass</id><coordinates><x>0</x><y>387</y><w>117</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
+    DRAFT = 'Draft'       </panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>909</x><y>630</y><w>27</w><h>63</h></coordinates><panel_attributes></panel_attributes><additional_attributes>10;10;10;50</additional_attributes></element><element><id>UMLClass</id><coordinates><x>90</x><y>387</y><w>117</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
 CustomerRank
 --
     BRONZE = 'Bronze'
     SILVER = 'Silver'
-    GOLD = 'Gold'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>36</x><y>468</y><w>27</w><h>117</h></coordinates><panel_attributes>lt=-
-</panel_attributes><additional_attributes>10;110;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>279</x><y>117</y><w>225</w><h>135</h></coordinates><panel_attributes>/User/
+    GOLD = 'Gold'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>126</x><y>468</y><w>27</w><h>117</h></coordinates><panel_attributes>lt=-
+</panel_attributes><additional_attributes>10;110;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>369</x><y>117</y><w>225</w><h>153</h></coordinates><panel_attributes>/User/
 --
 #userID: Char(36) (PK)
 #username: Varchar(50) unique not null
@@ -80,49 +81,50 @@ CustomerRank
 #surname: Varchar(100)
 #phone: Varchar(20)
 #role: RoleUser
+#isDeleted: Boolean
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>918</x><y>594</y><w>216</w><h>72</h></coordinates><panel_attributes>ImageCategory
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>1008</x><y>594</y><w>216</w><h>72</h></coordinates><panel_attributes>ImageCategory
 --
 -categoryID: Char(36) (PK, FK -&gt; Category)
 -imageID: Char(36) (PK, FK -&gt; Image)
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>522</x><y>252</y><w>216</w><h>63</h></coordinates><panel_attributes>PurchaseImage
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>UMLClass</id><coordinates><x>612</x><y>252</y><w>216</w><h>63</h></coordinates><panel_attributes>PurchaseImage
 --
 -purchaseID: Char(36) (PK, FK -&gt; Purchase)
 -imageID: Char(36) (PK, FK -&gt; Image)
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>477</x><y>594</y><w>27</w><h>72</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;60;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>594</x><y>306</y><w>27</w><h>81</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;70;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>972</x><y>513</y><w>27</w><h>99</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;10;10;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>522</x><y>423</y><w>135</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>567</x><y>594</y><w>27</w><h>72</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;60;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>684</x><y>306</y><w>27</w><h>81</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;70;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>1062</x><y>513</y><w>27</w><h>99</h></coordinates><panel_attributes>lt=.</panel_attributes><additional_attributes>10;10;10;90</additional_attributes></element><element><id>UMLClass</id><coordinates><x>612</x><y>423</y><w>135</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
 Currency
 -
     USD = 'USD'
     EUR = 'EUR'
-    AUD = 'AUD'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>486</x><y>396</y><w>117</w><h>45</h></coordinates><panel_attributes>lt=-
-</panel_attributes><additional_attributes>110;30;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>648</x><y>450</y><w>54</w><h>36</h></coordinates><panel_attributes>lt=-
-</panel_attributes><additional_attributes>10;20;40;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>594</x><y>153</y><w>180</w><h>45</h></coordinates><panel_attributes>Admin
+    AUD = 'AUD'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>576</x><y>396</y><w>117</w><h>45</h></coordinates><panel_attributes>lt=-
+</panel_attributes><additional_attributes>110;30;10;10</additional_attributes></element><element><id>Relation</id><coordinates><x>738</x><y>450</y><w>54</w><h>36</h></coordinates><panel_attributes>lt=-
+</panel_attributes><additional_attributes>10;20;40;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>684</x><y>153</y><w>180</w><h>45</h></coordinates><panel_attributes>Admin
 --
 -userID: Char(36) (PK, FK -&gt; User)
 
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>495</x><y>162</y><w>117</w><h>36</h></coordinates><panel_attributes>lt=&lt;&lt;-
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>585</x><y>162</y><w>117</w><h>36</h></coordinates><panel_attributes>lt=&lt;&lt;-
 m1=1
-m2=1</panel_attributes><additional_attributes>10;10;110;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>378</x><y>648</y><w>225</w><h>63</h></coordinates><panel_attributes>CartImage
+m2=1</panel_attributes><additional_attributes>10;10;110;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>468</x><y>648</y><w>225</w><h>63</h></coordinates><panel_attributes>CartImage
 --
 -userID: Char(36) (PK, FK -&gt; Customer)
 -imageID: Char(36) (PK, FK -&gt; Image)
 
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>477</x><y>531</y><w>225</w><h>45</h></coordinates><panel_attributes>lt=-
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>567</x><y>531</y><w>225</w><h>45</h></coordinates><panel_attributes>lt=-
 m1=1
 m2=0..*
-owns &gt;</panel_attributes><additional_attributes>10;20;230;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>324</x><y>0</y><w>153</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
+owns &gt;</panel_attributes><additional_attributes>10;20;230;20</additional_attributes></element><element><id>UMLClass</id><coordinates><x>414</x><y>0</y><w>153</w><h>90</h></coordinates><panel_attributes>&lt;&lt;enumaration&gt;&gt;
 RoleUser
 --
     ADMIN = 'Admin'
     CUSTOMER = 'Customer'
-    VENDOR = 'Vendor'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>378</x><y>81</y><w>27</w><h>54</h></coordinates><panel_attributes>lt=-
-</panel_attributes><additional_attributes>10;40;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>252</x><y>459</y><w>234</w><h>99</h></coordinates><panel_attributes>Vendor
+    VENDOR = 'Vendor'</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>468</x><y>81</y><w>27</w><h>54</h></coordinates><panel_attributes>lt=-
+</panel_attributes><additional_attributes>10;40;10;10</additional_attributes></element><element><id>UMLClass</id><coordinates><x>342</x><y>459</y><w>234</w><h>99</h></coordinates><panel_attributes>Vendor
 --
 -userID: Char(36) (PK, FK -&gt; Customer)
 -bio: Text
 -portfolio: Varchar(400)
-</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>198</x><y>513</y><w>72</w><h>72</h></coordinates><panel_attributes>lt=&lt;&lt;-
+</panel_attributes><additional_attributes></additional_attributes></element><element><id>Relation</id><coordinates><x>288</x><y>513</y><w>72</w><h>72</h></coordinates><panel_attributes>lt=&lt;&lt;-
 m1=1
 m2=1</panel_attributes><additional_attributes>10;60;10;10;60;10</additional_attributes></element></diagram>

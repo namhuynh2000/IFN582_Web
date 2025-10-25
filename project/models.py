@@ -78,6 +78,7 @@ class User:
     firstname: str = ''
     surname: str = ''
     phone: str = ''
+    isDeleted: bool = False
 
     def update_profile(self, firstname: str = '', surname: str = '', email: str = '', phone: str = ''):
         if firstname:

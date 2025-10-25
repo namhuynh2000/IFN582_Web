@@ -1,10 +1,157 @@
 from __future__ import annotations  # For forward references in type hints
-from project.models import (Admin, Category, City, Customer, CustomerRank, Image, Order,
-                            OrderStatus, Purchase, Rating, Role, Tour, UserAccount, UserInfo, Vendor)
+from project.models import (Admin, Category, Customer, CustomerRank, Image, Purchase, Rating, Role, Vendor)
 from datetime import datetime
 from project.utils import generate_uuid
 from . import mysql
 from project.models import User
+
+def get_images_sort(page=1, per_page=8, category_id=None):
+    offset = (page - 1) * per_page
+
+    base_query = """
+        SELECT 
+            i.imageID,
+            i.title,
+            i.description,
+            i.price,
+            i.currency,
+            i.updateDate,
+            i.imageStatus,
+            i.quantity,
+            i.extension,
+            i.userID
+        FROM Image i
+        WHERE i.isDeleted = FALSE
+          AND i.imageStatus = 'Active'
+    """
+
+    if category_id and category_id != 'all':
+        base_query = """
+            SELECT 
+                i.imageID,
+                i.title,
+                i.description,
+                i.price,
+                i.currency,
+                i.updateDate,
+                i.imageStatus,
+                i.quantity,
+                i.extension,
+                i.userID
+            FROM Image i
+            JOIN ImageCategory ic ON i.imageID = ic.imageID
+            WHERE i.isDeleted = FALSE
+              AND i.imageStatus = 'Active'
+              AND ic.categoryID = %s
+        """
+        params = (category_id, per_page, offset)
+    else:
+        params = (per_page, offset)
+
+    base_query += " ORDER BY i.updateDate DESC LIMIT %s OFFSET %s;"
+    with mysql.connection.cursor() as cur:
+        cur.execute(base_query, params)
+        return cur.fetchall()
+
+def count_images(category_id=None):
+    if category_id and category_id != 'all':
+        query = """
+            SELECT COUNT(*) AS total
+            FROM Image i
+            JOIN ImageCategory ic ON i.imageID = ic.imageID
+            WHERE i.isDeleted = FALSE
+              AND i.imageStatus = 'Active'
+              AND ic.categoryID = %s;
+        """
+        params = (category_id,)
+    else:
+        query = """
+            SELECT COUNT(*) AS total
+            FROM Image i
+            WHERE i.isDeleted = FALSE
+              AND i.imageStatus = 'Active';
+        """
+        params = ()
+
+    with mysql.connection.cursor() as cur:
+        cur.execute(query, params)
+        return cur.fetchone()["total"]
+
+
+def get_status_user(userID: str):
+    cur = mysql.connection.cursor()
+    cur.execute("SELECT isDeleted FROM User WHERE userID = %s", (userID,))
+    row = cur.fetchone()
+    cur.close()
+    if row:
+        return row
+    return None
+
+
+def get_categories():
+    cur = mysql.connection.cursor()
+    cur.execute(
+        "SELECT categoryID, categoryName, description FROM Category ORDER BY categoryName")
+    rows = cur.fetchall()
+    cur.close()
+    return [Category(
+        categoryID=row['categoryID'],
+        categoryName=row['categoryName'],
+        description=row['description']
+    ) for row in rows] if rows else []
+
+
+def add_category(category: Category):
+    cur = mysql.connection.cursor()
+    query = """
+        INSERT INTO Category (categoryID, categoryName, description) VALUES (%s, %s, %s)
+    """
+    data = (category.categoryID, category.categoryName, category.description)
+    try:
+        cur.execute(query, data)
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error adding category:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
+
+
+def edit_category(category: Category):
+    cur = mysql.connection.cursor()
+    query = """
+        UPDATE Category
+        SET categoryName=%s, description=%s
+        WHERE categoryID=%s
+    """
+    data = (category.categoryName, category.description, category.categoryID)
+    try:
+        cur.execute(query, data)
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error updating category:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
+
+
+def delete_category(categoryID: str):
+    cur = mysql.connection.cursor()
+    try:
+        cur.execute("DELETE FROM Category WHERE categoryID = %s",
+                    (categoryID,))
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error deleting category:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
 
 
 def get_ratings(userID=None, imageID=None):
@@ -98,19 +245,6 @@ def get_image_categories(imageID):
 
 # This is for list all images
 
-
-def get_categories():
-    cur = mysql.connection.cursor()
-    cur.execute("""
-                SELECT * FROM category;
-                """)
-    results = cur.fetchall()
-    listCategory = [Category(categoryName=row['categoryName'], categoryID=row['categoryID'],
-                             description=row['description']) for row in results]
-    cur.close()
-    print("listCategory: ", listCategory)
-    return listCategory
-
 # Vendor site, to get only categoryID and categoryName for each image
 
 
@@ -123,21 +257,6 @@ def get_all_categories():
     return [(str(r['categoryID']), r['categoryName']) for r in results]
 
 # Vendor site, to fetch seleted categories based on each imageID
-
-
-def get_categories_by_image(imageID):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT c.categoryID
-        FROM image i
-        JOIN imagecategory ic ON i.imageID = ic.imageID
-        JOIN category c ON ic.categoryID = c.categoryID
-        WHERE i.imageID = %s
-    """, (imageID,))
-    rows = cur.fetchall()
-    cur.close()
-    return [str(row['categoryID']) for row in rows]
-# Vendor site, to update image's categories via vendor management
 
 
 def update_image_categories(imageID, categoryIDs):
@@ -166,7 +285,7 @@ def get_images():
     cur.execute("""
                 SELECT 
                     *
-                FROM image WHERE isDeleted = False AND imageStatus = 'ACTIVE';
+                FROM image
                 """)
     results = cur.fetchall()
     listImage = []
@@ -199,12 +318,48 @@ def get_image(imageID: str):
     cur.close()
     return image
 
+
+def get_images_by_page(page: int, per_page: int):
+    offset = (page - 1) * per_page
+    cur = mysql.connection.cursor()
+    cur.execute("""
+            SELECT *
+            FROM image
+            WHERE image.imageStatus = 'Active' AND image.isDeleted = FALSE
+            ORDER BY image.updateDate DESC
+            LIMIT %s OFFSET %s;
+        """, (per_page, offset))
+    results = cur.fetchall()
+    cur.close()
+
+    images = []
+    for row in results:
+        image = Image(
+            userID=row['userID'],
+            listCategory=get_image_categories(imageID=row['imageID']),
+            imageID=row['imageID'],
+            title=row['title'],
+            description=row['description'],
+            price=float(row['price']),
+            quantity=int(row['quantity']),
+            currency=row['currency'],
+            imageStatus=row['imageStatus'],
+            extension=row['extension'],
+            updateDate=datetime.combine(
+                row['updateDate'], datetime.min.time()),
+            listRatings=get_ratings(imageID=row['imageID'])
+        )
+        images.append(image)
+
+    return images
+
+
 def get_active_image():
     cur = mysql.connection.cursor()
     cur.execute("""
             SELECT *
             FROM image
-            WHERE image.imageStatus = 'ACTIVE'
+            WHERE image.imageStatus = 'Active' AND image.isDeleted = FALSE
             ORDER BY image.updateDate DESC;
         """)
     result = cur.fetchall()
@@ -223,14 +378,17 @@ def get_active_image():
             currency=row['currency'],
             imageStatus=row['imageStatus'],
             extension=row['extension'],
-            updateDate=datetime.combine(row['updateDate'], datetime.min.time()),
+            updateDate=datetime.combine(
+                row['updateDate'], datetime.min.time()),
             listRatings=get_ratings(imageID=row['imageID'])
         )
         active_images.append(image)
 
     return active_images
 
-#Display vendor name in item detail page
+# Display vendor name in item detail page
+
+
 def get_vendorName(userID):
     cur = mysql.connection.cursor()
     cur.execute("SELECT username FROM user WHERE userID = %s", (userID,))
@@ -241,6 +399,8 @@ def get_vendorName(userID):
     return None
 
 # To display all images in vendor management
+
+
 def get_images_by_vendor(vendor_id):
     cur = mysql.connection.cursor()
     cur.execute("""
@@ -426,17 +586,6 @@ def add_image(image: Image):
     cur.close()
 
 
-def add_category(category: Category):
-    cur = mysql.connection.cursor()
-    query = """
-        INSERT INTO Category (categoryID, categoryName, description) VALUES (%s, %s, %s)
-    """
-    data = (category.categoryID, category.categoryName, category.description)
-    cur.execute(query, data)
-    mysql.connection.commit()
-    cur.close()
-
-
 def add_to_cart(userID: str, imageID: str):
     cur = mysql.connection.cursor()
     query = """
@@ -461,10 +610,8 @@ def get_user(username, password):
         WHERE username = %s AND password = %s AND isDeleted = FALSE
     """, (username, password))
     row = cur.fetchone()
-    print("row:", row)
     cur.close()
     if row:
-
         if row['role'] == Role.ADMIN.value:
             return get_admin(row['userID'])
         elif row['role'] == Role.CUSTOMER.value:
@@ -472,6 +619,32 @@ def get_user(username, password):
         elif row['role'] == Role.VENDOR.value:
             return get_vendor(row['userID'])
     return None
+
+
+def get_all_users():
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT *
+        FROM user
+    """)
+    results = cur.fetchall()
+    cur.close()
+
+    users = []
+    if results:
+        for row in results:
+            users.append(User(
+                username=row['username'],
+                role=Role(row['role']),
+                userID=row['userID'],
+                email=row['email'],
+                surname=row['surname'],
+                firstname=row['firstname'],
+                phone=row['phone'],
+                isDeleted=row['isDeleted']
+            ))
+
+    return users
 
 
 def remove_image_cart(userID: str, imageID: str):
@@ -484,6 +657,8 @@ def remove_image_cart(userID: str, imageID: str):
     cur.execute(query, data)
     mysql.connection.commit()
     cur.close()
+    
+
 
 
 def remove_all_image_cart(userID: str):
@@ -493,9 +668,16 @@ def remove_all_image_cart(userID: str):
         WHERE userID = %s
     """
     data = (userID,)
-    cur.execute(query, data)
-    mysql.connection.commit()
-    cur.close()
+    try:
+        cur.execute(query, data)
+        mysql.connection.commit()
+        return True
+    except Exception as e:
+        print("Error removing all images from cart:", e)
+        mysql.connection.rollback()
+        return False
+    finally:
+        cur.close()
 
 
 def add_purchase(userID: str, listImage: list[Image]):
@@ -632,7 +814,6 @@ def get_vendor(userID: str):
         WHERE u.userID = %s
     """, (userID,))
     row = cur.fetchone()
-    print("row vendor", row)
     cur.close()
     if row:
         return Vendor(username=row['username'], userID=row['userID'], email=row['email'], firstname=row['firstname'], surname=row['surname'], phone=row['phone'], customerRank=row['customerRank'], bio=row['bio'], portfolio=row['portfolio'])
@@ -713,187 +894,3 @@ def check_user(username: str):
         return True
     return False
 
-# ------------------------------------------TEMPLATE----------------------------------------------------
-
-
-def get_cities():
-    cur = mysql.connection.cursor()
-    cur.execute(
-        "SELECT city_id, city_name, city_description, city_image FROM cities")
-    results = cur.fetchall()
-    cur.close()
-    return [City(str(row['city_id']), row['city_name'], row['city_description'], row['city_image']) for row in results]
-
-
-def get_city(city_id):
-    cur = mysql.connection.cursor()
-    cur.execute(
-        "SELECT city_id, city_name, city_description, city_image FROM cities WHERE city_id = %s", (city_id,))
-    row = cur.fetchone()
-    cur.close()
-    return City(str(row['city_id']), row['city_name'], row['city_description'], row['city_image']) if row else None
-
-
-def get_tours():
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT t.tour_id, t.tour_name, t.tour_description, t.tour_image,
-               t.price, t.tour_date,
-               c.city_id, c.city_name, c.city_description, c.city_image
-        FROM tours t
-        JOIN cities c ON t.city_id = c.city_id
-    """)
-    results = cur.fetchall()
-    cur.close()
-    return [
-        Tour(str(row['tour_id']), row['tour_name'], row['tour_description'],
-             City(str(row['city_id']), row['city_name'],
-                  row['city_description'], row['city_image']),
-             row['tour_image'], float(row['price']), row['tour_date']) for row in results
-    ]
-
-
-def get_tour(tour_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT t.tour_id, t.tour_name, t.tour_description, t.tour_image,
-               t.price, t.tour_date,
-               c.city_id, c.city_name, c.city_description, c.city_image
-        FROM tours t
-        JOIN cities c ON t.city_id = c.city_id
-        WHERE t.tour_id = %s
-    """, (tour_id,))
-    row = cur.fetchone()
-    cur.close()
-    return Tour(str(row['tour_id']), row['tour_name'], row['tour_description'],
-                City(str(row['city_id']), row['city_name'],
-                     row['city_description'], row['city_image']),
-                row['tour_image'], float(row['price']), row['tour_date']) if row else None
-
-
-def get_tours_for_city(city_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT t.tour_id, t.tour_name, t.tour_description, t.tour_image,
-               t.price, t.tour_date,
-               c.city_id, c.city_name, c.city_description, c.city_image
-        FROM tours t
-        JOIN cities c ON t.city_id = c.city_id
-        WHERE c.city_id = %s
-    """, (city_id,))
-    results = cur.fetchall()
-    cur.close()
-    return [
-        Tour(str(row['tour_id']), row['tour_name'], row['tour_description'],
-             City(str(row['city_id']), row['city_name'],
-                  row['city_description'], row['city_image']),
-             row['tour_image'], float(row['price']), row['tour_date']) for row in results
-    ]
-
-
-def add_city(city):
-    cur = mysql.connection.cursor()
-    cur.execute("INSERT INTO cities (city_name, city_description, city_image) VALUES (%s, %s, %s)",
-                (city.name, city.description, city.image))
-    mysql.connection.commit()
-    cur.close()
-
-
-def add_tour(tour):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        INSERT INTO tours (city_id, tour_name, tour_description, tour_image, price, tour_date)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (tour.city.id, tour.name, tour.description, tour.image, tour.price, tour.date))
-    mysql.connection.commit()
-    cur.close()
-
-
-def add_order(order):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        INSERT INTO orders (user_id, order_status, total_cost, customer_name, customer_email, customer_phone)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (order.user.id, order.status.value, order.total_cost,
-          f"{order.user.firstname} {order.user.surname}",
-          order.user.email, order.user.phone))
-    order_id = cur.lastrowid
-
-    for item in order.items:
-        cur.execute("INSERT INTO order_items (order_id, tour_id, quantity) VALUES (%s, %s, %s)",
-                    (order_id, item.tour.id, item.quantity))
-
-    mysql.connection.commit()
-    cur.close()
-
-
-def get_orders():
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT order_id, user_id, order_status, total_cost, order_date,
-               customer_name, customer_email, customer_phone
-        FROM orders
-    """)
-    results = cur.fetchall()
-    cur.close()
-    return [
-        Order(str(row['order_id']), OrderStatus(row['order_status']),
-              UserInfo(str(row['user_id']),
-                       row['customer_name'].split()[0],
-                       row['customer_name'].split()[-1],
-                       row['customer_email'], row['customer_phone']),
-              row['total_cost'], [], row['order_date']) for row in results
-    ]
-
-
-def get_order(order_id):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT order_id, user_id, order_status, total_cost, order_date,
-               customer_name, customer_email, customer_phone
-        FROM orders
-        WHERE order_id = %s
-    """, (order_id,))
-    row = cur.fetchone()
-    cur.close()
-    return Order(str(row['order_id']), OrderStatus(row['order_status']),
-                 UserInfo(str(row['user_id']),
-                          row['customer_name'].split()[0],
-                          row['customer_name'].split()[-1],
-                          row['customer_email'], row['customer_phone']),
-                 row['total_cost'], [], row['order_date']) if row else None
-
-
-def check_for_user_(username, password):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        SELECT user_id, username, user_password, email, firstname, surname, phone
-        FROM users
-        WHERE username = %s AND user_password = %s
-    """, (username, password))
-    row = cur.fetchone()
-    cur.close()
-    if row:
-        return UserAccount(row['username'], row['user_password'], row['email'],
-                           UserInfo(str(row['user_id']), row['firstname'], row['surname'],
-                                    row['email'], row['phone']))
-    return None
-
-
-def is_admin(user_id):
-    cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM admins WHERE user_id = %s", (user_id,))
-    row = cur.fetchone()
-    cur.close()
-    return True if row else False
-
-
-def add_user_(form):
-    cur = mysql.connection.cursor()
-    cur.execute("""
-        INSERT INTO users (username, user_password, email, firstname, surname, phone)
-        VALUES (%s, %s, %s, %s, %s, %s)
-    """, (form.username.data, form.password.data, form.email.data,
-          form.firstname.data, form.surname.data, form.phone.data))
-    mysql.connection.commit()
-    cur.close()

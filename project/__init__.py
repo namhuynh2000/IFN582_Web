@@ -5,13 +5,11 @@ from flask_mysqldb import MySQL
 
 mysql = MySQL()
 
-
-
 #create a function that creates a web application
 # a web server will run this web application
 def create_app():
     app = Flask(__name__)
-    app.debug = True
+    app.debug = False
     app.secret_key = 'BetterSecretNeeded123'
     # MySQL configurations
     app.config['MYSQL_USER'] = 'root'
@@ -24,8 +22,7 @@ def create_app():
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
     
     mysql.init_app(app)
-
-    bootstrap = Bootstrap5(app)
+    Bootstrap5(app)
     
     #importing modules here to avoid circular references, register blueprints of routes
     from . import views
@@ -38,8 +35,6 @@ def create_app():
     @app.errorhandler(500)
     def internal_error(e):
       return render_template("500.html")
-
-    from . import session
 
     return app
 

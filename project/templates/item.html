@@ -1,48 +1,67 @@
 {% extends 'base.html' %}
 {% block main %}
 <!-- display image details -->
-    <div class="container mt-5">
-        <div class="row">
-            <nav class="mt-5" aria-label="breadcrumb">
-                <ol class="breadcrumb">
-                    <li class="breadcrumb-item">Home</li>
-                    <li class="breadcrumb-item active" aria-current="page">Detail</li>
-                </ol>
-            </nav>
-        </div>
-        <div class="row">
-            <div class="card p-0 mb-3">
-                <div class="row g-0">
-                    <div class="col-md-6">
-                        <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" 
-                    alt="Card image" class="img-fluid rounded-start"
-                            style="height: 100%; object-fit: cover; object-position: center;">
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card-body p-5 d-flex flex-column justify-content-between h-100">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <h4 class="card-title mb-0">{{ item.title }}</h4>
-                                <p class="card-title mb-0"><small class="text-body-secondary">Last updated: {{ item.updateDate.strftime('%Y-%m-%d') }}</small>
-                                </p>
-                            </div>
-                            <br>
-                            <p class="card-text">by {{ username }}</p>
-                            <p class="card-text">{{ item.description }}</p>
-                            <br />
-                            <div class="d-flex">
-                                <label class="bg-warning rounded-pill py-2 px-3 d-flex flex-row" style="display: block;"
-                                    for="">{{ item.currency }} ${{ item.price }}</label>
+<div class="container mt-5">
+    <!-- <div class="row">
+        <nav class="mt-5" aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item">Home</li>
+                <li class="breadcrumb-item active" aria-current="page">Detail</li>
+            </ol>
+        </nav>
+    </div> -->
+    <h1 class="text-center">Item detail</h1>
+    <div class="row mt-5">
+        <div class="card p-0 mb-3">
+            <div class="row g-0">
+                <div class="col-md-6 bg-dark">
+                    <img src="{{ url_for('static', filename='img/' + item.imageID + item.extension) }}" alt="Card image"
+                        class="img-fluid rounded-start"
+                        style="max-height: 60vh; height: auto; width: 100%; object-fit: cover; object-position: center;">
+                </div>
+                <div class="col-md-6">
+                    <div class="card-body p-4 d-flex flex-column justify-content-between h-100">
+                        <div>
+                            <h2 class="card-title display-4">{{item.title}}</h2>
+                            <p class="card-title"><small class="text-body-secondary">Last updated: {{
+                                    item.updateDate.strftime('%Y-%m-%d') }}</small>
+                            </p>
+                            <p class="card-title"><i class="bi bi-tag-fill"></i><strong>Price:</strong> {{ item.currency }} ${{ item.price }}</p>
+                            <p class="card-text"><i class="bi bi-person-fill"></i><strong>By:</strong> {{ username }}</p>
+                            <p class="card-text"><strong>Description:</strong> {{item.description}}</p>
+                        </div>
 
-                            </div>
-                            <div class="mt-3 d-flex justify-content-center justify-content-md-end gap-3">
-                                <a class="btn btn-primary" method="POST" 
-                        action="{{ url_for('main.checkout') }}">Add to Basket</a>
-                                <!-- <button class="btn btn-success">Free download</button> -->
-
-                            </div>
+                        <div class="mt-3 d-flex justify-content-center justify-content-md-end gap-3">
+                            <!-- <a class="btn btn-primary" method="POST" action="{{ url_for('main.checkout') }}">Add to
+                                Basket</a> -->
+                            <!-- <button class="btn btn-success">Free download</button> -->
+                            {% if item.imageID in boughtIDImages or item.userID == userID %}
+                            <button style="width: 100%;" class="btn btn-secondary"
+                                title="You have already bought this image">Download</button>
+                            {% else %}
+                            <button style="width: 100%;" class="btn btn-dark"
+                                onclick="addCart('{{ item.imageID }}')">Add to cart</button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-{% endblock %}
+    </div>
+    {% endblock %}
+
+    {% block scripts %}
+    <script>
+        async function addCart(imageID) {
+            confirm('Do you want to add this item to your cart?');
+            const response = await fetch(`/cart/${imageID}`, { method: "POST" });
+            if (response.status === 401) {
+                const data = await response.json();
+                window.location.href = data.redirect;  // chuyển trang tại client
+                return;
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    {% endblock %}

@@ -1,42 +1,149 @@
-{% extends 'base.html' %}
-
-{% import 'bootstrap5/form.html' as wtf %}
-
-{% block head %}
-   <h1 class="display-5 text-center mt-3 mb-3">Manage Photosite</h1>
-   <p class="lead text-center">
-        These forms are for adding new cities and tours for users to book.
-    </p>
-{% endblock %}
-
+{% extends "base.html" %}
 {% block main %}
-    
-    <details class="mb-3 shadow-lg rounded">
-        <summary class="text-bg-success ps-2 rounded">
-            <span class="lead">Add Category</span>
-        </summary>
-        <div class="row justify-content-center p-3">
-            <div class="col-md-6">
-                <p>
-                    Adds a new Category to the database. 
-                    <br>
-                </p>
-                {{ wtf.render_form(categoryForm) }}
-            </div>
-        </div>
-    </details>
 
-    <details class="mb-3 shadow-lg rounded">
-        <summary class="text-bg-success ps-2 rounded">
-            <span class="lead">Permission</span>
-        </summary>
-        <div class="row justify-content-center p-3">
-            <div class="col-md-6">
-                <p>
-                    Adds a new tour to an existing city. 
-                    <br>
-                </p>
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>Categories</h3>
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editModal" data-mode="create">+ New
+            Category</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th style="width: 220px;">Category Name</th>
+                    <th>Description</th>
+                    <th style="width: 160px;" class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in categories %}
+                <tr>
+                    <td>{{ c.categoryName }}</td>
+                    <td class="text-wrap">{{ c.description }}</td>
+                    <td class="text-end">
+                        <!-- Edit -->
+                        <button class="btn btn-sm btn-secondary " data-bs-toggle="modal"
+                            data-bs-target="#editModal" data-mode="edit" data-id="{{ c.categoryID }}"
+                            data-name="{{ c.categoryName }}" data-desc="{{ c.description|default('') }}">
+                            Edit
+                        </button>
+
+                        <!-- Delete -->
+                        <form action="{{ url_for('main.cat_delete', category_id=c.categoryID) }}" method="post"
+                            class="d-inline" onsubmit="return confirm('Delete this category?');">
+                            <button class="btn btn-sm btn-danger">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- One modal for Create + Edit -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="editForm" method="post">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalTitle">Edit category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+
+                <div class="modal-body">
+                    <input type="hidden" name="categoryID" id="f_id">
+                    <div class="mb-3">
+                        <label class="form-label">Category name</label>
+                        <input type="text" class="form-control" name="categoryName" id="f_name" required maxlength="50">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" name="description" id="f_desc" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal" type="button">Cancel</button>
+                    <button class="btn btn-primary" type="submit">Save</button>
+                </div>
             </div>
-        </div>
-    </details>
+        </form>
+    </div>
+</div>
+
+<div class="container my-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3>User Management</h3>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-striped align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th class="text-center">Status</th>
+                    <th class="text-center">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.phone }}</td>
+                    <td>{{ user.role.value }}</td>
+                    <td class="text-center">
+                        {% if not user.isDeleted %}
+                        <span class="badge bg-success">Active</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-center">
+                        <form action="{{ url_for('main.user_toggle', user_id=user.userID) }}" method="post" class="d-inline">
+                            {% if not user.isDeleted %}
+                            <button class="btn btn-sm btn-danger" type="submit">Deactivate</button>
+                            {% else %}
+                            <button class="btn btn-sm btn-success" type="submit">Activate</button>
+                            {% endif %}
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const modal = document.getElementById('editModal');
+        modal.addEventListener('show.bs.modal', (e) => {
+            const btn = e.relatedTarget;
+            const mode = btn.getAttribute('data-mode');
+            const form = document.getElementById('editForm');
+
+            if (mode === 'create') {
+                document.getElementById('modalTitle').textContent = 'New category';
+                form.action = "{{ url_for('main.cat_create') }}";
+                document.getElementById('f_id').value = '';
+                document.getElementById('f_name').value = '';
+                document.getElementById('f_desc').value = '';
+            } else {
+                document.getElementById('modalTitle').textContent = 'Edit category';
+                form.action = "{{ url_for('main.cat_update') }}";
+                document.getElementById('f_id').value = btn.getAttribute('data-id');
+                document.getElementById('f_name').value = btn.getAttribute('data-name');
+                document.getElementById('f_desc').value = btn.getAttribute('data-desc') || '';
+            }
+        });
+    });
+</script>
+
 {% endblock %}

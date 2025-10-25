@@ -9,10 +9,10 @@ def only_admins(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if check_user_logged_in() is False:
-            flash('Please log in before moving on.', 'error')
+            flash('Please log in before moving on', 'error')
             return redirect(url_for('main.login'))
         if not session['user']['role'] == Role.ADMIN.value:
-            flash('You do not have permission to view this page.', 'error')
+            flash('You do not have permission to view this page', 'error')
             return redirect(url_for('main.index'))
         return func(*args, **kwargs)
     return wrapper
@@ -23,10 +23,10 @@ def only_vendors(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         if check_user_logged_in() is False:
-            flash('Please log in before moving on.', 'error')
+            flash('Please log in before moving on', 'error')
             return redirect(url_for('main.login'))
         if not session['user']['role'] == Role.VENDOR.value:
-            flash('You do not have permission to view this page.', 'error')
+            flash('You do not have permission to view this page', 'error')
             return redirect(url_for('main.index'))
         return func(*args, **kwargs)
     return wrapper
